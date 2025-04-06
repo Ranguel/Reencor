@@ -1,0 +1,20 @@
+# ignore images
+Assets/images/SF3
+Assets/images/SVC
+
+# ignore sounds
+Assets/sounds/SF3
+
+# ignore temporal
+*.pyc
+__pycache__/
+
+# ignore VSCode conf
+.vscode/
+
+# ignore system files
+Thumbs.db
+.DS_Store
+
+Assets/images
+Assets/sounds

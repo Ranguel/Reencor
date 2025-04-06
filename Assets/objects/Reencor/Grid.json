@@ -1,0 +1,23 @@
+{
+    "tipe":"stage",
+    "name": "Trining Stage", 
+    "portrait": "02_Ryu/03286",
+    "light":[-1,1,-3,0],
+    "ambient":[0.9, 0.7, 0.6, 1],
+    "music":"",
+    "scale":1,
+    "gravity":0,
+    "mass":100000,
+    "terminal_velocity":0,
+    "timekill":false,
+    "def_image_size":[10000,10000],
+    "def_image_offset":[0,0],
+    "palette":[[]],
+    "gauges":[],
+    "boxes":{"boundingbox":{"boxes":[[-4000,-950,8000,400]]}},
+    "camera_focus_point_limit":[[-1300,1300],[850,-100]],
+    "trials":[],
+    "layers":{
+        "back":{"image":"reencor/grid","pos":[-1305,-800,250],"image_size":[2610,1800],"angle":[0,0,0],"repeat":true}
+}
+}

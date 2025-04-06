@@ -1,0 +1,25 @@
+{
+    "tipe":"stage",
+    "name": "Castle SF3", 
+    "portrait": "02_Ryu/03286",
+    "light":[-1,1,-2,0],
+    "ambient":[0.9, 0.9, 0.9, 1],
+    "music":"",
+    "scale":1,
+    "gravity":0,
+    "mass":100000,
+    "terminal_velocity":0,
+    "timekill":false,
+    "def_image_size":[10000,10000],
+    "def_image_offset":[0,0],
+    "palette":[[]],
+    "gauges":[],
+    "boxes":{"boundingbox":{"boxes":[[-4000,-950,8000,400]]}},
+    "camera_focus_point_limit":[[-1300,1300],[850,-100]],
+    "trials":[],
+    "layers":{
+        "Sky":{"image":"castle SF3/stage13","image_glow":1,"pos":[-4500,-3300,600],"image_size":[7060,4000]},
+        "Background":{"image":"castle SF3/stage12","image_glow":0.7,"pos":[-1800,-1000,160],"image_size":[3424,1910]},
+        "Foreground":{"image":"castle SF3/stage11","image_glow":0.6,"pos":[-1300,600,0],"image_size":[2610,270]}
+}
+}
