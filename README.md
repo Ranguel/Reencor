@@ -25,7 +25,7 @@ This game uses character sprites from *Street Fighter III* and *SNK vs Capcom* f
 
 You can download the sprites from the following source:
 
-- [Ryu Street Fighter III (Sprite Sets)](https://www.nowak.ca/zweifuss/all/02_Ryu.zip/)
+- [Ryu Street Fighter III (Sprite Sets)](https://www.nowak.ca/zweifuss/all/02_Ryu.zip)
 - [Ken Street Fighter III (Sprite Sets)](https://www.nowak.ca/zweifuss/all/11_Ken.zip)
 - [Ingame effects Street Fighter III (Sprite Sets)](https://www.justnopoint.com/zweifuss/all/22_Ingame%20Effects.zip)
 - [SNK vs Capcom - Haohmaru (The Spriters Resource)](https://www.spriters-resource.com/download/42408/)
