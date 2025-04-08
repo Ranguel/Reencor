@@ -1,4 +1,4 @@
-# Reencor-0.3
+# Reencor
  
 A retro-inspired 2D fighting game featuring classic-style sprites, Pygame, and OpenGL.
 
