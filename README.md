@@ -17,7 +17,6 @@ A retro-inspired 2D fighting game featuring classic-style sprites, Pygame, and O
 - Python 3.9+
 - [Pygame](https://www.pygame.org/)
 - [PyOpenGL](http://pyopengl.sourceforge.net/)
-- Numpy
 - glm (optional, for matrix math)
 
 ## Sprites
@@ -37,6 +36,6 @@ Place the downloaded sprites in the `Assets/images` folder before running the ga
 ## How to Run
 
 ```bash
-git clone https://github.com/Ranguel/Reencor-0.3
+git clone https://github.com/Ranguel/Reencor
 cd Reencor
 python main.py
