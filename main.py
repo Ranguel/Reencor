@@ -1,4 +1,5 @@
-import os,random
+import os
+import random
 from pygame import init, quit, event, mixer, time, display, joystick
 from pygame.locals import *
 
@@ -13,19 +14,18 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 def Input_available_device():
     keyboard_conut = 1
     joystick_count = joystick.get_count()
-    devices=[InputDevice(1, 1, 'keyboard', 1), InputDevice(2, 2, 'none', 1)]
+    devices = [InputDevice(1, 1, 'keyboard', 1), InputDevice(2, 2, 'none', 1)]
     try:
-        devices[1]=InputDevice(2, 0, 'joystick', 1)
+        devices[1] = InputDevice(2, 0, 'joystick', 1)
     except:
         pass
-    
 
     return devices
 
 
 class GameObject():
     def __init__(self):
-        global  image_dict, sound_dict, object_dict
+        global image_dict, sound_dict, object_dict
 
         mixer.pre_init(44100, -16, 1, 1024)
         init()
@@ -62,7 +62,7 @@ class GameObject():
         self.input_device_list = Input_available_device()
         self.screen_sequence = [TrainingScreen,
                                 SinglePlayerCharacterSelectionScreen]
-        #self.screen_sequence = [DebuggingScreen]
+        # self.screen_sequence = [DebuggingScreen]
         self.current_screen = None
 
         self.record_input = False
@@ -72,10 +72,10 @@ class GameObject():
         self.active_player_2 = None
         self.active_stage = None
 
-    def next_screen(self, screen_sequence: list=[TitleScreen]):
-        self.active=False
-        self.screen_sequence+=screen_sequence
-        
+    def next_screen(self, screen_sequence: list = [TitleScreen]):
+        self.active = False
+        self.screen_sequence += screen_sequence
+
     def screen_manager(self):
         while len(self.screen_sequence):
             self.active = True
@@ -261,7 +261,6 @@ class GameObject():
         update_display_shake(self.camera)
 
         self.calculate_camera_focus_point()
-       
 
 
 game = GameObject()

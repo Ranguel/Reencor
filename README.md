@@ -31,7 +31,7 @@ You can download the sprites from the following source:
 - [SNK vs Capcom - Haohmaru (The Spriters Resource)](https://www.spriters-resource.com/download/42408/)
 - [SNK vs Capcom - Terry Bogard (The Spriters Resource)](https://www.spriters-resource.com/download/42433/)
 
-Place the downloaded sprites in the `Assetrs/images` folder before running the game.
+Place the downloaded sprites in the `Assets/images` folder before running the game.
 
 ## How to Run
 

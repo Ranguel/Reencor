@@ -13,17 +13,14 @@ class CustomJSONEncoder(json.JSONEncoder):
             formatted_items = []
             for key, value in obj.items():
                 if isinstance(value, dict) and key == "moveset":
-                    # Serializar moveset asegurando que cada clave-valor esté en una línea
                     formatted_moveset = ",\n    ".join(
                         f'"{k}": {json.dumps(v)}' for k, v in value.items())
-                    # Ajustar indentación
                     formatted_value = "{\n    " + formatted_moveset + "\n}"
                 elif isinstance(value, dict):
-                    # Mantener otros diccionarios en una sola línea
                     formatted_value = json.dumps(value, separators=(',', ': '))
                 else:
                     formatted_value = json.dumps(
-                        value, separators=(',', ': '))  # Mantener inline
+                        value, separators=(',', ': '))
                 formatted_items.append(f'"{key}": {formatted_value}')
             return "{\n  " + ",\n  ".join(formatted_items) + "\n}"
         return super().encode(obj)
@@ -76,7 +73,7 @@ class Menu_Item_String():
 
 class Menu_Selector():
     def __init__(self, team, inputdevice=object, menu=(Menu_Item), index=0):
-        self.inputdevice, self.selected_index, self.last_index, self.timer, self.selected, self.selected_name, self.current_input, self.last_input, self.pos, self. size = inputdevice, index, 0, 0, 0, None, inputdevice.raw_input, inputdevice.raw_input, (
+        self.inputdevice, self.selected_index, self.last_index, self.timer, self.selected, self.selected_name, self.pos, self. size = inputdevice, index, 0, 0, 0, None, (
             0, 0), (100, 100)
         self.menu = menu
         self.color = color[team]
@@ -108,12 +105,12 @@ class Menu_Selector():
         if self.timer < 0:
             self.timer, self.last_index = 30, self.selected_index
         if self.inputdevice.inter_press:
-            if 'short' in self.inputdevice.current_press:
+            if 'p_b3' in self.inputdevice.current_input:
                 self.on_selection()
-            if 'forward' in self.inputdevice.current_press:
+            if 'p_b2' in self.inputdevice.current_input:
                 self.on_deselection()
             if self.selected == 0:
-                if self.inputdevice.current_input[0] != '5' and self.inputdevice.current_input[0] != self.last_input[0]:
+                if self.inputdevice.current_input[0] != '5':
                     for ind in range(len(self.menu)):
                         if ind == self.selected_index:
                             continue
@@ -128,7 +125,7 @@ class Menu_Selector():
                     if best_option != None:
                         self.change_index(best_option)
 
-        self.last_input = self.inputdevice.current_input
+        
 
     def draw(self, screen, pos, *args):
         screen.draw_rect((pos[0]+self.draw_shake[0]-screen.size[0]/2+self.menu[self.selected_index].pos[0]+(self.menu[self.last_index].pos[0]-self.menu[self.selected_index].pos[0])/6*self.timer, pos[1]+self.draw_shake[1]-screen.size[1]/2 + + self.menu[self.selected_index].pos[1]+(self.menu[self.last_index].pos[1] -

@@ -94,7 +94,6 @@ def draw_texture(texture_id, pos=[0, 0, 0], size=[0, 0], flip=[False, False], ti
     glRotatef(angle[2], 0, 0, 1)
     glTranslatef(-width / 2, -height / 2, 0)
 
-    # Configurar el brillo usando la emisividad del material
     glow_color = [tint[0] / 255 * glow, tint[1] /
                   255 * glow, tint[2] / 255 * glow, 1.0]
     glMaterialfv(GL_FRONT, GL_EMISSION, glow_color)
@@ -112,7 +111,6 @@ def draw_texture(texture_id, pos=[0, 0, 0], size=[0, 0], flip=[False, False], ti
     glVertex2f(0, height)
     glEnd()
 
-    # Restaurar la emisividad a negro (sin brillo extra)
     glMaterialfv(GL_FRONT, GL_EMISSION, [0, 0, 0, 1])
 
     glPopMatrix()
@@ -122,9 +120,9 @@ def draw_cross(pos, size=40, color=(255, 255, 255, 255), thickness=2):
     x, y, z = pos+[0] if len(pos) == 2 else pos
     half_size = size / 2
 
-    glDisable(GL_DEPTH_TEST)  # Desactiva profundidad temporalmente
-    glDisable(GL_TEXTURE_2D)  # Evita que los rectángulos tomen texturas
-    # Desactiva iluminación para garantizar color correcto
+    glDisable(GL_DEPTH_TEST)
+    glDisable(GL_TEXTURE_2D)
+
     glDisable(GL_LIGHTING)
 
     glColor4f(color[0]/255, color[1]/255, color[2]/255, color[3]/255)
@@ -137,9 +135,9 @@ def draw_cross(pos, size=40, color=(255, 255, 255, 255), thickness=2):
     glVertex3f(x, y + half_size, z)
     glEnd()
 
-    glEnable(GL_DEPTH_TEST)  # Reactiva profundidad
-    glEnable(GL_TEXTURE_2D)  # Reactiva texturas
-    glEnable(GL_LIGHTING)  # Reactiva iluminación
+    glEnable(GL_DEPTH_TEST)
+    glEnable(GL_TEXTURE_2D)
+    glEnable(GL_LIGHTING)
 
 
 def draw_rect(rect, color=(255, 255, 255, 255), thickness=1, fill=False, z_offset=0, glow=1):
@@ -148,11 +146,11 @@ def draw_rect(rect, color=(255, 255, 255, 255), thickness=1, fill=False, z_offse
     glPushMatrix()
     glTranslatef(0, 0, z_offset)
 
-    glDisable(GL_DEPTH_TEST)  # Desactiva profundidad temporalmente
-    glDisable(GL_TEXTURE_2D)  # Evita que los rectángulos tomen texturas
-    # Desactiva iluminación para garantizar color correcto
+    glDisable(GL_DEPTH_TEST)
+    glDisable(GL_TEXTURE_2D)
+  
     glDisable(GL_LIGHTING)
-    glUseProgram(0)  # Desactiva shaders si están en uso
+    glUseProgram(0) 
 
     glColor4f(color[0] / 255, color[1] / 255, color[2] / 255, color[3] / 255)
     glow_color = [color[0] / 255 * glow, color[1] /
@@ -177,21 +175,21 @@ def draw_rect(rect, color=(255, 255, 255, 255), thickness=1, fill=False, z_offse
 
     glPopMatrix()
 
-    glEnable(GL_DEPTH_TEST)  # Reactiva profundidad
-    glEnable(GL_TEXTURE_2D)  # Reactiva texturas
-    glEnable(GL_LIGHTING)  # Reactiva iluminación
+    glEnable(GL_DEPTH_TEST)
+    glEnable(GL_TEXTURE_2D)
+    glEnable(GL_LIGHTING)
 
 
 def draw_teapod(pos=(0, 0, 0), scale=(0, 0, 0), color=(0, 0, 0, 0)):
-    glDisable(GL_TEXTURE_2D)  # Evita que los rectángulos tomen texturas
+    glDisable(GL_TEXTURE_2D)
     glPushMatrix()
-    glTranslatef(pos[0], pos[1], pos[2])  # Posicionar la tetera
+    glTranslatef(pos[0], pos[1], pos[2])
     glScalef(scale[0], scale[1], scale[2])
-    glRotatef(pygame.time.get_ticks() * 0.05, 0, 1, 0)  # Rotación animada
+    glRotatef(pygame.time.get_ticks() * 0.05, 0, 1, 0)
     glColor4f(color[0] / 255, color[1] / 255, color[2] / 255, color[3] / 255)
-    glutSolidTeapot(1)  # Dibujar la tetera
+    glutSolidTeapot(1)
     glPopMatrix()
-    glEnable(GL_TEXTURE_2D)  # Reactiva texturas
+    glEnable(GL_TEXTURE_2D)
 
 
 class Camera:
@@ -252,11 +250,9 @@ class Screen2:
         self.size = size
         self.draw_list = []
 
-        # Crear el Framebuffer
         self.fbo = glGenFramebuffers(1)
         glBindFramebuffer(GL_FRAMEBUFFER, self.fbo)
 
-        # Crear la textura para almacenar el render
         self.texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self.texture_id)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
@@ -264,11 +260,9 @@ class Screen2:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        # Asociar la textura al framebuffer
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self.texture_id, 0)
 
-        # Crear un Renderbuffer para el depth buffer
         self.rbo = glGenRenderbuffers(1)
         glBindRenderbuffer(GL_RENDERBUFFER, self.rbo)
         glRenderbufferStorage(
@@ -276,11 +270,10 @@ class Screen2:
         glFramebufferRenderbuffer(
             GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, self.rbo)
 
-        # Verificar si el framebuffer se creó correctamente
         if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE:
             print("Error: Framebuffer no creado correctamente")
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Desvincular el framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
     def draw_texture(self, texture_id, pos=[0, 0, 0], size=[0, 0], flip=[False, False], tint=(255, 255, 255, 255), angle=[0, 0, 0], repeat=False, glow=0):
         self.draw_list.append(
@@ -305,7 +298,7 @@ class Screen2:
         for draw_calls in self.draw_list:
             draw_calls[0](*draw_calls[1:])
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)  # Volver al framebuffer principal
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
         self.draw_list.clear()
 
     def display(self, pos=[0, 0, 0], size=[100, 100], shape="quad"):

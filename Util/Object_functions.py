@@ -21,8 +21,8 @@ colors = {'hurtbox': (20, 20, 255, 255), 'hitbox': (255, 20, 20, 255), 'takebox'
 
 default_substate = {'dur': 1}
 
-default_hitbox = {'hitset': 1, 'damage': (10, 0), 'gain': (5, 0), 'stamina': (0, 0), 'hitstun': (
-    30, 0), 'hitstop': 10, 'juggle': 1, 'knockback': {"grounded": [14, 0]}, 'hittipe': ['medium', 'middle']}
+default_hitbox = {'damage': (0, 0), 'gain': (0, 0), 'stamina': (0, 0), 'hitstun': (
+    0, 0), 'hitstop': 10, 'juggle': 1, 'knockback': {"grounded": [0, 0]}, 'hittipe': ['medium', 'middle']}
 
 attack_tipe_value = {'parry': {'scaling': 10, 'min_scaling': 0}, 'block': {'scaling': 10, 'min_scaling': 10}, 'critical': {'scaling': 10, 'min_scaling': 40}, 'super': {'scaling': 10, 'min_scaling': 36}, 'special': {
     'scaling': 10, 'min_scaling': 16}, 'heavy': {'scaling': 10, 'min_scaling': 14}, 'medium': {'scaling': 9, 'min_scaling': 12}, 'light': {'scaling': 8, 'min_scaling': 10}, 'no_match': {'scaling': 8, 'min_scaling': 40}}
@@ -149,7 +149,7 @@ def unzip_if_needed(path):
 
 
 def get_dictionaries(current_dir):
-    path= current_dir + '/Assets'
+    path = current_dir + '/Assets'
 
     unzip_if_needed(path)
 
@@ -166,10 +166,13 @@ def get_dictionaries(current_dir):
         if ext in ['png', 'jpg', 'jpeg']:
             try:
                 image_dict[key] = load_image_bites(data)
-            except: pass
+            except:
+                pass
         elif ext in ['wav', 'ogg', 'mp3']:
-            try: sound_dict[key] = pygame.mixer.Sound(BytesIO(data))
-            except: pass
+            try:
+                sound_dict[key] = pygame.mixer.Sound(BytesIO(data))
+            except:
+                pass
         elif ext in ['json', 'xml']:
             try:
                 ob_json = dummy_json | json.loads(data.decode('utf-8'))
@@ -177,11 +180,12 @@ def get_dictionaries(current_dir):
                     ob_json["boxes"][box] = dummy_json['boxes'][box] | ob_json["boxes"].get(box, {
                     })
                 object_dict[key] = ob_json
-            except: pass
+            except:
+                pass
 
     if os.path.isdir(path):
         for root, _, files in os.walk(path):
-            for name in files:                
+            for name in files:
                 ext = name.lower().split('.')[-1]
                 full_path = os.path.join(root, name)
                 key = get_parent_key(os.path.relpath(full_path, path))
@@ -208,7 +212,7 @@ def draw_string(screen, string=str, pos=(0, 0, 0), scale=(1, 1), color=(255, 255
         screen.draw_texture(image_dict['font '+i][0], (pos[0]+offset_turn * scale[0]-(0 if alignment == 'right' else sum([image_dict['font '+n][1][0]for n in string])
                                                                                       * scale[0]), pos[1], pos[2]), (image_dict['font '+i][1][0]*scale[0], image_dict['font '+i][1][1]*scale[1]), (False, False), color, [0, 0, 0], False, 1)
         offset_turn += image_dict['font '+i][1][0]
-        
+
 
 mirror_pad = {'1': '3', '3': '1', '4': '6', '6': '4', '7': '9', '9': '7', '12': '32', '13': '31', '14': '36', '15': '35', '16': '34', '17': '39', '18': '38', '19': '37', '21': '23', '23': '21', '24': '26', '26': '24', '27': '29', '29': '27', '31': '13', '32': '12', '34': '16', '35': '15', '36': '14', '37': '19', '38': '18', '39': '17', '41': '63', '42': '62', '43': '61', '45': '65', '46': '64', '47': '69', '48': '68', '49': '67',
               '51': '53', '53': '51', '54': '56', '56': '54', '57': '59', '59': '57', '61': '43', '62': '42', '63': '41', '64': '46', '65': '45', '67': '49', '68': '48', '69': '47', '71': '93', '72': '92', '73': '91', '74': '96', '75': '95', '76': '94', '78': '98', '79': '97', '81': '83', '83': '81', '84': '86', '86': '84', '87': '89', '89': '87', '91': '73', '92': '72', '93': '71', '94': '76', '95': '75', '96': '74', '97': '79', '98': '78'}
@@ -223,7 +227,12 @@ def get_command(self, state=[]):
             input_gate = [mirror_pad.get(l, l) for l in object_dict[self.name]['moveset'][move]['command'][index][self.command_index_timer[move][index][0]].split(",")]if (
                 self.other_main_object.pos[0]-self.pos[0]) < 0 else object_dict[self.name]['moveset'][move]['command'][index][self.command_index_timer[move][index][0]].split(",")
 
-            if len(set(input_gate).intersection(state)) == len(input_gate):
+            intersection = 0
+            for input in input_gate:
+                if ('|' in input and set(input.split("|")) & set(state)) or ('!' in input and input.split("!")[1] not in state) or (input in state):
+                    intersection += 1
+
+            if intersection >= len(input_gate):
                 self.command_index_timer[move][index] = [self.command_index_timer[move][index]
                                                          [0]+1, object_dict[self.name]['moveset'][move].get('command_link_time', 14)]
                 if self.command_index_timer[move][index][0] >= len(object_dict[self.name]['moveset'][move]['command'][index]):
@@ -236,8 +245,8 @@ def get_state(self, buffer={}, force=0):
         if force or (self.fet in object_dict[self.name]['moveset'][move].get('state', 'grounded') and ((self.frame == [0, 0] or (('kara' in object_dict[self.name]['moveset'][move].get('cancel', ["neutral"]) and self.kara and 'kara'not in object_dict[self.name]['moveset'][self.current_state].get('cancel', ["neutral"])) or (set(self.cancel).intersection(object_dict[self.name]['moveset'][move].get('cancel', ["neutral"])))))) and self.gauges.get('pressure', 0) >= object_dict[self.name]['moveset'][move].get('use pressure', 0)):
             if object_dict[self.name]['moveset'][move].get('use pressure', 0):
                 self.gauges['pressure'] -= object_dict[self.name]['moveset'][move]['use pressure']
-            self.current_state, self.boxes, self.frame, self.kara, self.buffer_state, self.acceleration, self.con_speed, self.hitstun = move, dict(
-                object_dict[self.name]['boxes']), [len(object_dict[self.name]['moveset'][move]['framedata']), 0], 2, {}, [0, 0], [0, 0], -1 if ('ummble' in move and self.fet == 'airborne')else self.hitstun
+            self.current_state, self.boxes, self.frame, self.kara, self.buffer_state, self.acceleration, self.con_speed, self.hitstun, self.repeat = move, dict(
+                object_dict[self.name]['boxes']), [len(object_dict[self.name]['moveset'][move]['framedata']), 0], 2, {}, [0, 0], [0, 0], -1 if ('ummble' in move and self.fet == 'airborne')else self.hitstun, 0
 
             return True
     return False
@@ -315,9 +324,10 @@ def object_hit_hitstop(self: object, stop=10, other=object, *args):
         other.speed[0], other.speed[1], 20, 'self'], self)
 
 
-def object_hit_juggle(self: object, juggle=1, other=object, *args):
+def object_hit_juggle(self: object, juggle: int = 1, other=object, *args):
     """Indicates how many hits an object can withstand while airborne. When the counter is less than 0, the hit object becomes intangible until it hits the ground. 'Juggle': Juggle number subtracted"""
-    other.juggle -= juggle
+    if other.fet == 'airborne':
+        other.juggle -= int(juggle)
 
 
 def object_hit_knockback(self: object, knockback={"grounded": [14, 0]}, other=object, *args):
@@ -332,7 +342,7 @@ def object_hit_knockback(self: object, knockback={"grounded": [14, 0]}, other=ob
         speed = list(knockback['parry'])if knockback.get(
             "parry", False)else [0, 0]
     speed[0] = speed[0]*self.face
-    other.speed, other.fet, other.face, other.pos[1] = speed, 'airborne' if speed[1] > 0 and other.fet == 'grounded' else 'grounded', 1 if self.pos[
+    other.speed, other.fet, other.face, other.pos[1] = speed, 'airborne' if speed[1] > 0 and other.fet == 'grounded' else 'grounded', 1 if self.self_main_object.pos[
         0] > other.pos[0] else -1, other.pos[1]-(10 if speed[1] > 0 and other.fet == 'grounded' else 0)
 
 
@@ -576,15 +586,19 @@ def object_guard(self: object, guard=['middle', 0], *args):
     pass
 
 
-def object_repeat(self: object, repeat_substate=0, *args):
+def object_repeat_substate(self: object, repeat_substate=0, *args):
     """Repeat from the specified substate within the current state."""
-    self.frame = [self.frame[0]+repeat_substate, 0]
+    if self.repeat < repeat_substate[1] or repeat_substate[1] == -1:
+        self.frame, self.repeat = [self.frame[0] +
+                                   repeat_substate[0], 0], self.repeat + 1
+    if self.repeat == repeat_substate[1]:
+        self.frame = [self.frame[0], 0]
 
 
 def object_get_state(self: object, command=[], *args):
     """Updates the current state by searching through a state buffer."""
     get_command(self, self.current_command +
-                list(self.inputdevice.current_press)+command)
+                list(self.inputdevice.current_input)+command)
     got_state = get_state(self, self.buffer_state)
     if got_state:
         next_frame(self, object_dict[self.name]['moveset']
@@ -593,7 +607,7 @@ def object_get_state(self: object, command=[], *args):
 
 def object_other_get_state(self: object, command=[], other=object, *args):
     """Updates the current state by searching through a state buffer."""
-    get_command(other, other.current_command+list(other.inputdevice.current_press) +
+    get_command(other, other.current_command+list(other.inputdevice.current_input) +
                 [self.name, self.current_state]+command)
     got_state = get_state(other, other.buffer_state)
     if got_state:
@@ -681,7 +695,7 @@ function_dict = {
     'wallbounce': object_wallbounce,
 
     'dur': object_duration,  # duration in frames #dict
-    
+
     'image': object_image,  # image image #dict
     'image_size': object_image_size,  # current image offset #dict
     'image_offset': object_image_offset,  # current image offset #dict
@@ -733,16 +747,18 @@ function_dict = {
     'influence_speed': object_influence_speed,
     'off_influence': object_off_influence,
 
-    'repeat_substate': object_repeat,  # go back n frames #function
+    'repeat_substate': object_repeat_substate,  # go back n frames #function
     'get_state': object_get_state,  # cancel to next move #function
     'other_get_state': object_other_get_state,
     'trigg_state': object_trigger_state,
     'random_state': object_random_state,
 
-    'stop': object_stop,  # 
+    'stop': object_stop,  #
 
-    'create_VisualEffectObject': object_create_VisualEffectObject,  # object generation #function
-    'create_ProjectileActiveObject': object_create_ProjectileActiveObject,  # object generation #function
+    # object generation #function
+    'create_VisualEffectObject': object_create_VisualEffectObject,
+    # object generation #function
+    'create_ProjectileActiveObject': object_create_ProjectileActiveObject,
 
     'kill': object_kill,  # destroy object
 

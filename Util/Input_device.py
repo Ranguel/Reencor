@@ -21,8 +21,8 @@ class InputDevice():
             self.con = joystick_name_mapping[self.controller.get_name()]
         self.show, self.press_list_showed = show, [
             ['false', 'false'] for n in range(9)]
-        self.current_press, self.raw_input, self.current_input, self.last_input, self.press_charge, self.inter_press = ['5'], [
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ['5'], ['5', 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0
+        self.current_input, self.raw_input, self.current_input, self.last_input, self.press_charge, self.inter_press = [[0, 0], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ['5'], [[0, 0], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0
         self.mode_name = 'AI'
         self.input_timer = 0
         self.record_timer = 0
@@ -90,25 +90,31 @@ class InputDevice():
         self.get_press([[self.raw_input[0]+self.raw_input[1]*-1, self.raw_input[2]+self.raw_input[3]*-1], self.raw_input[4],
                         self.raw_input[5], self.raw_input[6], self.raw_input[7], self.raw_input[8], self.raw_input[9], self.raw_input[10]])
 
-    def get_press(self, current_input):
+    def get_press(self, raw_input):
+        # ↙↓↘←•→↖↑↗
+        self.inter_press = 0
+        self.current_input.clear()
 
-        self.current_input, self.inter_press = [[['8', '2', '5'], ['9', '3', '6'], [
-            # ↙↓↘←•→↖↑↗
-            '7', '1', '4']][current_input[0][0]][current_input[0][1]-1]]+current_input[1:], 0
-        for n, c in enumerate(self.current_input):
-            self.press_charge[n] = (self.press_charge[n]+1 if self.press_charge[n] <
-                                    255 else 255)if ((c and c != -1) and c == self.last_input[n])else 0
-        self.current_press = [self.current_input[0]]+[('0', 'roundhouse', 'forward', 'short', 'fierce', 'strong', 'jab', "Start")[ind]for ind in range(1, len(self.current_input))if (
-            self.current_input[ind] and self.current_input[ind] != self.last_input[ind]) or (1 in self.current_input[1:] and self.press_charge[ind] == 1 and self.last_input[ind] == 1)]
-        if self.current_input[0] != self.last_input[0] or len([ind for ind in range(1, len(self.current_input))if self.current_input[ind] == 1 and self.current_input[ind] != self.last_input[ind]]):
-            self.inter_press, self.current_press = 1, self.current_press + \
-                [str(self.last_input[0])+str(self.current_input[0])]
-            if len(self.press_list_showed) > 11:
+        self.current_input = [[['8', '2', '5'], ['9', '3', '6'], ['7', '1', '4']][raw_input[0][0]][raw_input[0][1]-1]] + [('0', 'p_b1', 'p_b2', 'p_b3', 'p_b4', 'p_b5', 'p_b6', "p_b7")[ind]for ind in range(1, len(raw_input))if (raw_input[ind] == 1 and self.last_input[ind] == 0)
+                                                                                                                          ] + [('0', 'r_b1', 'r_b2', 'r_b3', 'r_b4', 'r_b5', 'r_b6', "r_b7")[ind]for ind in range(1, len(raw_input))if (raw_input[ind] == 0 and self.last_input[ind] == 1)
+                                                                                                                               ] + [('0', 'h_b1', 'h_b2', 'h_b3', 'h_b4', 'h_b5', 'h_b6', "h_b7")[ind]for ind in range(1, len(raw_input))if (raw_input[ind] == 1 and self.last_input[ind] == 1)]
+
+        # for n, c in enumerate(current_input):
+        #     self.press_charge[n] = (self.press_charge[n]+1 if self.press_charge[n] <
+        #                             255 else 255)if ((c and c != -1) and c == self.last_input[n])else 0
+
+        if raw_input != self.last_input:
+            self.inter_press, self.current_input = 1, self.current_input + \
+                [str([['8', '2', '5'], ['9', '3', '6'], ['7', '1', '4']][self.last_input[0]
+                     [0]][self.last_input[0][1]-1])+str(self.current_input[0])]
+            if len(self.press_list_showed) > 20:
                 self.press_list_showed.pop(0)
-            self.press_list_showed.append(self.current_press)
+            self.press_list_showed.append(list(self.current_input))
             self.last_input_timer = self.input_timer
             self.input_timer = 0
-        self.last_input = self.current_input
+
+        self.last_input = raw_input
+
         self.input_timer += 1
 
     def update(self, *args):
@@ -121,8 +127,8 @@ class InputDevice():
             for input in self.press_list_showed[index]:
                 object_image(self, 'reencor/'+input)
 
-                screen.draw_texture(self.image, (pos[0]+(-600 if self.team == 1 else 560)+50*turn*(
-                    1 if self.team == 1 else -1), pos[1]+280-50*(index), -10), self.real_image_size)
+                screen.draw_texture(self.image, (pos[0]+(-600 if self.team == 1 else 575)+25*turn*(
+                    1 if self.team == 1 else -1), pos[1]+260-25*(index), -10), [self.real_image_size[0]/2, self.real_image_size[1]/2])
                 turn += 1
 
         # self.screen.draw_texture(self.surface,(0 if self.team==1 else 880,0),(20,20))

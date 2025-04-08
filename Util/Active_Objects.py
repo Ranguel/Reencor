@@ -86,6 +86,7 @@ class CharacterActiveObject():
         self.other_main_object = None
         self.object_influence = None
         self.grabed = None
+        self.repeat = 0
 
         self.image_tint = (255, 255, 255, 255)
         self.image_angle = (0, 0, 0)
@@ -126,7 +127,7 @@ class CharacterActiveObject():
             self.buffer_state = {
                 timer: self.buffer_state[timer]-1 for timer in self.buffer_state if self.buffer_state[timer] > 0}
         if self.inputdevice.inter_press or (self.frame[0] <= 0 and self.frame[1] <= 0):
-            self.current_command += list(self.inputdevice.current_press)
+            self.current_command += list(self.inputdevice.current_input)
             get_command(self, self.current_command)
         if ((self.inputdevice.inter_press or self.buffer_state) and (not set(self.cancel).intersection([None]) or self.kara) and (self.hitstop == 0 or self.hitstop and self.ignore_stop)) or (self.frame[0] <= 0 and self.frame[1] <= 0):
             get_state(self, self.buffer_state)
@@ -183,6 +184,7 @@ class ProjectileActiveObject():
         self.other_main_object = None
         self.object_influence = None
         self.grabed = None
+        self.repeat = 0
 
         self.image_tint = (255, 255, 255, 255)
         self.image_angle = (0, 0, 0)
@@ -224,7 +226,7 @@ class ProjectileActiveObject():
             self.buffer_state = {
                 timer: self.buffer_state[timer]-1 for timer in self.buffer_state if self.buffer_state[timer] > 0}
         if self.inputdevice.inter_press or (self.frame[0] <= 0 and self.frame[1] <= 0):
-            self.current_command += list(self.inputdevice.current_press)
+            self.current_command += list(self.inputdevice.current_input)
             get_command(self, self.current_command)
         if ((self.inputdevice.inter_press or self.buffer_state) and (not set(self.cancel).intersection([None])) and (self.hitstop == 0 or self.hitstop and self.ignore_stop)) or (self.frame[0] <= 0 and self.frame[1] <= 0):
             get_state(self, self.buffer_state)
@@ -267,6 +269,7 @@ class VisualEffectObject():
         if inicial_state:
             get_state(self, {inicial_state: 2}, 1), next_frame(
                 self, object_dict[self.name]['moveset'][self.current_state]['framedata'][0])
+        self.repeat = 0
 
         self.image_tint = (255, 255, 255, 255)
         self.image_angle = (0, 0, 0)

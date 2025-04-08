@@ -106,7 +106,7 @@ class SinglePlayerCharacterSelectionScreen():
 	def __dein__(self):
 		self.game.selected_characters = [
 			selected.selected_name for selected in self.menu_selectors]
-		self.game.selected_stage = ['SF3/Castle']
+		self.game.selected_stage = ['Reencor/Training']
 
 
 class TrainingScreen():
@@ -221,7 +221,7 @@ class DebuggingScreen():
 		self.game = game
 
 		self.game.selected_characters = ['SF3/Ken', 'SF3/Ryu']
-		self.game.selected_stage = ['SF3/Castle']
+		self.game.selected_stage = ['Reencor/Training']
 
 		self.add_object = [StageActiveObject(game.selected_stage[0]), CharacterActiveObject(1, game.input_device_list[0], game.selected_characters[0], (0, 800), 1, 0), CharacterActiveObject(
 			2, game.input_device_list[1], game.selected_characters[1], (300, 800), -1, 1), Combo_Counter(1), Combo_Counter(2), Gauge_Bar(1, 'health'), Gauge_Bar(1, 'pressure'), Gauge_Bar(2, 'health'), Gauge_Bar(2, 'pressure')]
