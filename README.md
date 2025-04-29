@@ -4,7 +4,7 @@ A retro-inspired 2D fighting game featuring classic-style sprites, Pygame, and O
 
 ## Version
 
-**Version:** 0.3.0 (Pre-Alpha)
+**Version:** 0.3.1 (Pre-Alpha)
 
 ## Features
 
@@ -17,7 +17,6 @@ A retro-inspired 2D fighting game featuring classic-style sprites, Pygame, and O
 - Python 3.9+
 - [Pygame](https://www.pygame.org/)
 - [PyOpenGL](http://pyopengl.sourceforge.net/)
-- glm (optional, for matrix math)
 
 ## Sprites
 
@@ -31,7 +30,7 @@ You can download the sprites from the following source:
 - [SNK vs Capcom - Haohmaru (The Spriters Resource)](https://www.spriters-resource.com/download/42408/)
 - [SNK vs Capcom - Terry Bogard (The Spriters Resource)](https://www.spriters-resource.com/download/42433/)
 
-Place the downloaded sprites in the `Assets/images` folder before running the game.
+Unzip the file and place the folder in the `Assets/images` folder before running the game.
 
 ## How to Run
 
