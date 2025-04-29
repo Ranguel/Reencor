@@ -1,7 +1,8 @@
-import os,json
+import os
+import json
 from pygame import mouse
 
-from Util.Object_functions import color, colors, image_dict, sound_dict, object_dict, draw_string, gradient_color, nomatch, RoundSign, get_command, get_state, next_frame, get_object_per_class_ev, get_object_per_team, object_image, object_kill
+from Util.Object_functions import color, colors, image_dict, sound_dict, object_dict, draw_string, string_size, gradient_color, nomatch, RoundSign, get_command, get_state, next_frame, get_object_per_team, object_display_shake, object_image, object_kill
 from Util.boxes_collitions import box_collide
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -43,19 +44,18 @@ class Menu_Item():
             self.timer -= 1
 
     def draw(self, screen, pos, *args):
-        screen.draw_texture(self.image, (pos[0]+self.draw_shake[0]-screen.size[0]/2+self.pos[0], pos[1]+self.draw_shake[1]-screen.size[1]/2+self.pos[1], self.pos[2]-self.timer),
+        screen.draw_texture(self.image, (self.draw_shake[0] + pos[0]-screen.size[0]/2+self.pos[0], self.draw_shake[1] + pos[1]-screen.size[1]/2+self.pos[1], self.pos[2]-self.timer),
                             self.size, self.image_mirror, self.image_tint, self.image_angle, self.image_repeat, self.image_glow)
 
 
 class Menu_Item_String():
-    def __init__(self, name = '', pos: list = (0, 0, 0), scale: list = (1, 1), func: callable = nomatch, param: any = None, alignment: str = 'right', color: list = (255, 255, 255, 255), gradient_timer: int = 0):
-        self.name, self.pos, self.size, self.func, self.param, self.timer = name, pos, scale(
-            name, scale), func, param, 0
+    def __init__(self, name='', pos: list = (0, 0, 0), scale: list = (1, 1), func: callable = nomatch, param: any = None, alignment: str = 'right', color: list = (255, 255, 255, 255), gradient_timer: int = 0):
+        self.name, self.pos, self.size, self.scale, self.func, self.param, self.timer = name, pos, string_size(
+            name, scale), scale, func, param, 0
         self.image, self.image_size, self.image_offset, self.image_mirror, self.draw_shake = None, (100, 100), [
             0, 0], [False, False], [0, 0, 0, 0, 0, 0]
         self.image_tint, self.image_angle, self.image_repeat, self.image_glow = (
             255, 255, 255, 255), (0, 0, 0), False, 1
-        self.scale = scale
         self.alignment = alignment
         self.color = color
         self.gradient_timer = 0
@@ -66,9 +66,10 @@ class Menu_Item_String():
         if self.timer:
             self.timer -= 1
 
-    def draw(self, screen, *args):
-        draw_string(screen, self.name, (self.draw_shake[0] + self.pos[0], self.draw_shake[1] +
-                    self.pos[1], self.pos[2]-self.timer), self.scale, self.color, self.alignment)
+    def draw(self, screen, pos, *args):
+
+        draw_string(screen, self.name, (self.draw_shake[0] + pos[0]-screen.size[0]/2+self.pos[0], self.draw_shake[1] +
+                    pos[1]-screen.size[1]/2+self.pos[1], self.pos[2]-self.timer), self.scale, self.color, self.alignment)
 
 
 class Menu_Selector():
@@ -125,8 +126,6 @@ class Menu_Selector():
                     if best_option != None:
                         self.change_index(best_option)
 
-        
-
     def draw(self, screen, pos, *args):
         screen.draw_rect((pos[0]+self.draw_shake[0]-screen.size[0]/2+self.menu[self.selected_index].pos[0]+(self.menu[self.last_index].pos[0]-self.menu[self.selected_index].pos[0])/6*self.timer, pos[1]+self.draw_shake[1]-screen.size[1]/2 + + self.menu[self.selected_index].pos[1]+(self.menu[self.last_index].pos[1] -
                                                                                                                                                                                                                                                                                          self.menu[self.selected_index].pos[1])/6*self.timer, self.menu[self.selected_index].size[0], self.menu[self.selected_index].size[1]), gradient_color(0 if self.selected else self.timer, 30, self.color, (255, 255, 255, 255)), 5, False, -self.menu[self.selected_index].timer if self.selected else 0)
@@ -173,7 +172,7 @@ class Menu_Cursor():
         self.box_edit = False
         self.selected_box_tipe = 'hurtbox'
         global game
-        game = get_object_per_class_ev("GameObject")
+        game = ''
 
     def change_box_tipe(
         self, selected_box_tipe): self.selected_box_tipe = selected_box_tipe
@@ -241,7 +240,7 @@ class Menu_Cursor():
                     screen.draw_rect(colors[boxes_tipe], (-game.pos[0]+self.player.rect.centerx+box[0]*self.player.face-box[2]*(
                         self.player.face < 0), -game.pos[1]+self.player.rect.centery-box[3]-box[1], box[2], box[3]), 3)
         screen.draw_rect((0, 0, 0), (-game.pos[0]+self.player.rect.centerx-16, -game.pos[1] +
-                                             self.player.rect.centery), (-game.pos[0]+self.player.rect.centerx+16, -game.pos[1]+self.player.rect.centery), 3)
+                                     self.player.rect.centery), (-game.pos[0]+self.player.rect.centerx+16, -game.pos[1]+self.player.rect.centery), 3)
         screen.draw_rect((0, 0, 0), (-game.pos[0]+self.player.rect.centerx, -game.pos[1]+self.player.rect.centery-16),
                          (-game.pos[0]+self.player.rect.centerx, -game.pos[1]+self.player.rect.centery+16), 3)
 
@@ -316,22 +315,25 @@ class Menu_Cursor():
 
 
 class Combo_Counter():
-    def __init__(self, team=1):
+    def __init__(self, game, team=1):
         self.team = team
-        self.image, self.image_size = '2', (1000, 200)
+        self.image, self.image_size = None, (1000, 200)
         self.scale = [1.5, 1.5]
         self.pos, self.timer, self.gradient_timer = (40, 150, 0), 0, 0
         self.combo = 0
         self.self_main_object = None
         self.other_main_object = None
         self.draw_shake = [0, 0, 0, 0, 0, 0]
+        self.game = game
 
     def update(self, *args):
         if self.self_main_object == None:
-            self.self_main_object = get_object_per_team(self.team, False)
+            self.self_main_object = get_object_per_team(
+                self.game.object_list, self.team, False)
 
         if self.other_main_object == None:
-            self.other_main_object = get_object_per_team(self.team)
+            self.other_main_object = get_object_per_team(
+                self.game.object_list, self.team)
 
         if self.self_main_object.combo != self.combo:
             self.combo, self.timer, self.gradient_timer = self.self_main_object.combo, (150)*(
@@ -342,11 +344,11 @@ class Combo_Counter():
     def draw(self, screen, pos, *args):
         if self.timer:
             draw_string(screen, 'COMBO '+str(self.combo), (self.draw_shake[0] + (pos[0]-((screen.size[0]*0.5)*abs(pos[2]/400))+40 if self.team == 1 else pos[0]+((screen.size[0]*0.5)*abs(pos[2]/400))-40), self.draw_shake[1] + pos[1]-(
-                (screen.size[1]*0.5)*abs(pos[2]/400))+self.pos[1], self.pos[2]), self.scale, gradient_color(self.gradient_timer, 6, (160, 160, 160, 0), (160, 160, 160, 255)), 'right' if self.team == 1 else 'left')
+                (screen.size[1]*0.5)*abs(pos[2]/400))+self.pos[1], self.pos[2]), self.scale, gradient_color(self.gradient_timer, 6, (0, 0, 0, 0), (255, 255, 255, 255)), 'right' if self.team == 1 else 'left')
 
 
 class Gauge_Bar():
-    def __init__(self, team, tipe):
+    def __init__(self, game, team, tipe):
         self.team = team
         self.image, self.image_size = '2', (1000, 200)
         self.pos, self.timer, self.gradient_timer = (40, 150, 0), 0, 0
@@ -354,36 +356,44 @@ class Gauge_Bar():
         self.self_main_object = None
         self.texture_dict = {}
         self.draw_shake = [0, 0, 0, 0, 0, 0]
+        self.game = game
 
     def get_texture_dict(self):
         for n in range(len(object_dict[self.self_main_object.name]['gauges'][self.tipe]['images'])):
             object_image(
-                self, object_dict[self.self_main_object.name]['gauges'][self.tipe]['images'][n]['name'])
+                self, object_dict[self.self_main_object.name]['gauges'][self.tipe]['images'][n]['image'])
             self.texture_dict[n] = self.image, object_dict[self.self_main_object.name]['gauges'][self.tipe]['images'][
                 n]['pos'], object_dict[self.self_main_object.name]['gauges'][self.tipe]['images'][n]['size']
         self.gauge = object_dict[self.self_main_object.name]['gauges'][self.tipe]
 
     def update(self, *args):
         if self.self_main_object == None:
-            self.self_main_object = get_object_per_team(self.team, False)
+            self.self_main_object = get_object_per_team(
+                self.game.object_list, self.team, False)
             self.get_texture_dict()
-
         self.timer = self.timer-1 if self.timer else 0
-        if self.timer < 0:
+        if self.timer <= 0:
             self.timer = self.gauge.get('blink', 0)
 
     def draw(self, screen, pos, *args):
-
-        # color_grad = gradient_color(self.timer, self.gauge.get('blink', 0), self.gauge['color'][0], self.gauge['color'][1])if self.gauge.get(
-        #     'blink', 0)else gradient_color(self.self_main_object.gauges[self.tipe], self.gauge['max'], self.gauge['color'][0], self.gauge['color'][1])
-
-        # pygame.draw.line(self.surface, color_grad, (self.gauge['start'][0]-round((self.gauge['start'][0]-self.gauge['end'][0])*(((self.self_main_object.gauges[self.tipe]/self.gauge['max'])
-        #                  * self.gauge['level']) % 1+int(self.self_main_object.gauges[self.tipe] >= self.gauge['max']))), self.gauge['start'][1]), self.gauge['start'], self.gauge['thickness'])
-
+        color_grad = gradient_color(self.timer, self.gauge['bar'].get('blink', 0), self.gauge['bar']['color'][0], self.gauge['bar']['color'][1])if self.gauge.get(
+            'blink', 0)else gradient_color(self.self_main_object.gauges[self.tipe], self.gauge['max'], self.gauge['bar']['color'][0], self.gauge['bar']['color'][1])                      
+        screen.draw_line([pos[0]+(self.gauge['bar']['start'][0]-round((self.gauge['bar']['start'][0]-self.gauge['bar']['end'][0])*(((self.self_main_object.gauges[self.tipe]/self.gauge['max']) * self.gauge['bar']['level']) % 1+int(self.self_main_object.gauges[self.tipe] >= self.gauge['max']))))*(1 if self.team == 1 else -1), pos[1]+self.gauge['bar']['start'][1]], [pos[0]+self.gauge['bar']['start'][0]*(1 if self.team == 1 else -1), pos[1]+self.gauge['bar']['start'][1]], color_grad, self.gauge['bar']['thickness'])
         for image in self.texture_dict:
-            screen.draw_texture(self.texture_dict[image][0], (pos[0]+((-screen.size[0]*0.5+self.texture_dict[image][1][0]) if self.team == 1 else (screen.size[0]*0.5-self.texture_dict[image]
-                                                                                                                                                   [1][0]-self.texture_dict[image][2][0])), pos[1]-screen.size[1]*0.5+self.texture_dict[image][1][1], -2), self.texture_dict[image][2], (self.team == 1, False), (255, 255, 255, 255), [0, 0, 0], False, 1)
+            screen.draw_texture(self.texture_dict[image][0], (pos[0]+((-screen.size[0]*0.5+self.texture_dict[image][1][0]) if self.team == 1 else (screen.size[0]*0.5-self.texture_dict[image][1][0] -
+                                self.texture_dict[image][2][0])), pos[1]-screen.size[1]*0.5+self.texture_dict[image][1][1], -2), self.texture_dict[image][2], (self.team == 1, False), (255, 255, 255, 255), [0, 0, 0], False, 1, always_on_top = True)
+        if self.gauge['bar'].get('level_indicator', False):
+            draw_string(screen, str(int((self.self_main_object.gauges[self.tipe]/self.gauge['max'])*self.gauge['bar']['level'])), ((self.draw_shake[0]+pos[0]+self.gauge['bar']['level_indicator'][0]*(1 if self.team == 1 else -1), self.draw_shake[1] + pos[1]+self.gauge['bar']['level_indicator'][1], -2)), (1,1), (0,0,0,0), 'right' if self.team == 1 else 'left')
 
-        # if self.gauge.get('level_indicator', False):
-        #     screen.draw_texture(menu_font.render(str(int(
-        #         (self.self_main_object.gauges[self.tipe]/self.gauge['max'])*self.gauge['level'])), True, color_grad), self.gauge['level_indicator'])
+
+class Message():
+    def __init__(self, game, pos: list=[0,0,0], scale: list=[1,1], message: str='none', time: int=60, gradient_timer:int=0,kill_on_time: bool = True, top: bool=True, shake: list=[0, 0, 0]):
+        self.game,self.pos,self.size,self.scale,self.message,self.timer,self.gradient_timer,self.kill_on_time,self.top,self.draw_shake=game,pos,string_size(message, scale),scale,message,time,gradient_timer,kill_on_time,top,[0,0,0,0,0,0]
+        object_display_shake(self, shake+['self'])
+    def update(self, *args):
+        self.timer = self.timer-1 if self.timer else 0
+        self.gradient_timer = self.gradient_timer-1 if self.gradient_timer else 6
+        if self.kill_on_time and self.timer==0: object_kill(self)
+    def draw(self, screen, pos, *args):
+        if self.timer:
+            draw_string(screen, str(self.message), (self.draw_shake[0]+pos[0]+self.pos[0], self.draw_shake[1]+pos[1]+self.pos[1], self.pos[2]), self.scale, gradient_color(self.gradient_timer, 6, (0, 0, 0, 0), (255, 255, 255, 255)),'right',self.top)

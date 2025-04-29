@@ -3,7 +3,7 @@ from Util.Object_functions import image_dict, sound_dict, object_dict, RoundSign
 
 
 class StageActiveObject():
-    def __init__(self, key, pos=(280, 200, 0), face=1, palette=0, inicial_state='grounded/n/5'):
+    def __init__(self, game = object, key = 'grid', pos=(280, 200, 0), face=1, palette=0, inicial_state='grounded/n/5'):
         self.tipe = 'stage'
         self.name, self.pos, self.face, self.palette = key, ([pos[0], pos[1], 0] if len(
             pos) == 2 else pos), face, palette
@@ -12,6 +12,7 @@ class StageActiveObject():
         self.frame, self.hitstop, self.draw_shake = [
             0, 0], 0, [0, 0, 0, 0, 0, 0]
         self.current_state, self.buffer_state = 'none', {}
+        self.game = game
 
     def update(self, *args): pass
 
@@ -21,43 +22,8 @@ class StageActiveObject():
                                                                                                   ['layers'][layer]['pos'][2]), object_dict[self.name]['layers'][layer]['image_size'], (False, False), (255, 255, 255, 255), object_dict[self.name]['layers'][layer].get('angle', (0, 0, 0)), object_dict[self.name]['layers'][layer].get('repeat', False), object_dict[self.name]['layers'][layer].get('image_glow', 0))
 
 
-def reset_CharacterActiveObject(self, team=1, key='', pos=(280, 200, 0), face=1, palette=0, inicial_state=False):
-    self.tipe = 'character'
-    self.team, self.name, self.pos, self.face, self.palette = team, key, ([
-        pos[0], pos[1], 0] if len(pos) == 2 else pos), face, palette
-    self.hurt_coll_hit, self.hit_coll_hurt, self.trigger_coll_hurt, self.take_coll_grab = [], [], [], []
-    self.frame, self.image, self.image_size, self.image_offset, self.image_mirror, self.draw_shake = [
-        0, 0], 'reencor/none', (100, 100), [0, 0], [False, False], [0, 0, 0, 0, 0, 0]
-    self.current_command, self.command_index_timer = [5], {move: [[0, 0] for ind in object_dict[self.name]['moveset'][move].get(
-        'command', ())] for move in object_dict[self.name]['moveset'] if object_dict[self.name]['moveset'][move].get('command', False)}
-    self.mass, self.scale, self.time_kill, self.gauges, self.boxes = object_dict[self.name]['mass'], object_dict[self.name]['scale'], object_dict[self.name]['timekill'], {
-        gauge: object_dict[self.name]['gauges'][gauge]['inicial'] for gauge in object_dict[self.name]['gauges']}, object_dict[self.name]['boxes']
-    self.cancel, self.ignore_stop, self.hold_on_stun, self.kara, self.hitstun, self.hitstop = [
-        0], False, False, 0, 0, 0
-    self.speed, self.acceleration, self.con_speed, self.air_time, self.air_max_height = [
-        0, 0], [0, 0], [0, 0], 0, 0
-    self.fet, self.current_state, self.buffer_state, self.wallbounce = 'grounded', 'Stand', {}, False
-    self.combo, self.parry, self.juggle, self.damage_scaling, self.last_damage = 0, [
-        '6', 0], 100, [100, 100], [0, 0]
-    self.voice_channel, self.sound_channel = mixer.Channel(
-        self.team), mixer.Channel(self.team+2)
-    self.move_raw_input = {move: [] for move in object_dict[self.name]['moveset']
-                           if object_dict[self.name]['moveset'][move].get('command', False)}
-    if inicial_state:
-        get_state(self, {inicial_state: 2}, 1), next_frame(
-            self, object_dict[self.name]['moveset'][self.current_state]['framedata'][0])
-
-    self.object_influence = None
-    self.grabed = None
-
-    self.image_tint = (255, 255, 255, 255)
-    self.image_angle = (0, 0, 0)
-    self.image_repeat = False
-    self.image_glow = 0
-
-
 class CharacterActiveObject():
-    def __init__(self, team=1, inputdevice=object, key='', pos=(280, 200, 0), face=1, palette=0, inicial_state=False):
+    def __init__(self, game = object, team=1, inputdevice=object, key='', pos=(280, 200, 0), face=1, palette=0, inicial_state=False):
         self.tipe = 'character'
         self.team, self.inputdevice, self.name, self.pos, self.face, self.palette = team, inputdevice, key, ([
             pos[0], pos[1], 0] if len(pos) == 2 else pos), face, palette
@@ -87,17 +53,20 @@ class CharacterActiveObject():
         self.object_influence = None
         self.grabed = None
         self.repeat = 0
+        self.guard = ''
 
         self.image_tint = (255, 255, 255, 255)
         self.image_angle = (0, 0, 0)
         self.image_repeat = False
         self.image_glow = 0
 
+        self.game = game
+
     def update(self, *args):
         if self.self_main_object == None:
-            self.self_main_object = get_object_per_team(self.team, False)
+            self.self_main_object = get_object_per_team(self.game.object_list, self.team, False)
         if self.other_main_object == None:
-            self.other_main_object = get_object_per_team(self.team)
+            self.other_main_object = get_object_per_team(self.game.object_list, self.team)
         if ((self.inputdevice.current_input[0] in ['1', '3'] and self.face > 0) or (self.inputdevice.current_input[0] in ['4', '6'] and self.face < 0)) and self.inputdevice.inter_press and self.parry[1] == 0:
             self.parry = [self.inputdevice.current_input[0], 24]
         self.parry[1] = self.parry[1]-1 if self.parry[1] else 0
@@ -113,7 +82,7 @@ class CharacterActiveObject():
         if (not self.hitstop) and (self.grabed == None):
             if self.hitstun:
                 self.hitstun -= 1
-            if (object_dict[self.name]['tipe'] == 'character' and (set(self.cancel).intersection(['neutral', 'turn', 'kara'])) and self.fet == 'grounded' and self.face != RoundSign(self.other_main_object.pos[0]-self.pos[0]) and abs(self.other_main_object.pos[0]-self.pos[0]) > 32):
+            if ((set(self.cancel).intersection(['neutral', 'turn', 'kara']) or self.frame == [0, 0]) and self.fet == 'grounded' and self.face != RoundSign(self.other_main_object.pos[0]-self.pos[0]) and abs(self.other_main_object.pos[0]-self.pos[0]) > 32):
                 self.face, self.current_command, self.inputdevice.inter_press = RoundSign(
                     self.other_main_object.pos[0]-self.pos[0]), ['turn']+self.current_command, 1
             self.speed = [self.speed[0]+self.acceleration[0] *
@@ -155,7 +124,7 @@ class CharacterActiveObject():
 
 
 class ProjectileActiveObject():
-    def __init__(self, team=1, inputdevice=object, key='', pos=(280, 200, 0), face=1, palette=0, inicial_state=False):
+    def __init__(self, game = object, team=1, inputdevice=object, key='', pos=(280, 200, 0), face=1, palette=0, inicial_state=False):
         self.tipe = 'character'
         self.team, self.inputdevice, self.name, self.pos, self.face, self.palette = team, inputdevice, key, ([
             pos[0], pos[1], 0] if len(pos) == 2 else pos), face, palette
@@ -185,17 +154,20 @@ class ProjectileActiveObject():
         self.object_influence = None
         self.grabed = None
         self.repeat = 0
+        self.guard = ''
 
         self.image_tint = (255, 255, 255, 255)
         self.image_angle = (0, 0, 0)
         self.image_repeat = False
         self.image_glow = 0
 
+        self.game = game
+
     def update(self, *args):
         if self.self_main_object == None:
-            self.self_main_object = get_object_per_team(self.team, False)
+            self.self_main_object = get_object_per_team(self.game.object_list, self.team, False)
         if self.other_main_object == None:
-            self.other_main_object = get_object_per_team(self.team)
+            self.other_main_object = get_object_per_team(self.game.object_list, self.team)
         if ((self.inputdevice.current_input[0] in ['1', '3'] and self.face > 0) or (self.inputdevice.current_input[0] in ['4', '6'] and self.face < 0)) and self.inputdevice.inter_press and self.parry[1] == 0:
             self.parry = [self.inputdevice.current_input[0], 24]
         self.parry[1] = self.parry[1]-1 if self.parry[1] else 0
@@ -211,8 +183,6 @@ class ProjectileActiveObject():
         if (not self.hitstop) and (self.grabed == None):
             if self.hitstun:
                 self.hitstun -= 1
-
-            if (object_dict[self.name]['tipe'] == 'character' and (set(self.cancel).intersection(['neutral', 'turn'])) and self.fet == 'grounded' and self.face != RoundSign(self.other_main_object.pos[0]-self.pos[0]) and abs(self.other_main_object.pos[0]-self.pos[0]) > 32):
                 self.face, self.current_command, self.inputdevice.inter_press = RoundSign(
                     self.other_main_object.pos[0]-self.pos[0]), ['turn']+self.current_command, 1
             self.speed = [self.speed[0]+self.acceleration[0] *
@@ -254,7 +224,7 @@ class ProjectileActiveObject():
 
 
 class VisualEffectObject():
-    def __init__(self, key='', pos=(280, 200, 0), face=1, palette=0, inicial_state=False):
+    def __init__(self, game = object, key='', pos=(280, 200, 0), face=1, palette=0, inicial_state=False):
         self.tipe = 'visualeffect'
         self.team, self.name, self.pos, self.face, self.palette = 0, key, ([pos[0], pos[1], 0] if len(
             pos) == 2 else pos), face, palette
@@ -275,6 +245,8 @@ class VisualEffectObject():
         self.image_angle = (0, 0, 0)
         self.image_repeat = False
         self.image_glow = 0
+
+        self.game = game
 
     def update(self, *args):
         if (self.frame[0] <= 0 and self.frame[1] <= 0):
@@ -334,4 +306,38 @@ class Dummy_object:
         self.object_influence = None
 
 
-dummy = Dummy_object()
+def reset_CharacterActiveObject(self, game = object, team=1, inputdevice=object, key='', pos=(280, 200, 0), face=1, palette=0, inicial_state=False):
+        self.tipe = 'character'
+        self.team, self.inputdevice, self.name, self.pos, self.face, self.palette = team, inputdevice, key, ([
+            pos[0], pos[1], 0] if len(pos) == 2 else pos), face, palette
+        self.hurt_coll_hit, self.hit_coll_hurt, self.trigger_coll_hurt, self.take_coll_grab = [], [], [], []
+        self.frame, self.image, self.image_size, self.image_offset, self.image_mirror, self.draw_shake = [
+            0, 0], 'reencor/none', (100, 100), [0, 0], [False, False], [0, 0, 0, 0, 0, 0]
+        self.current_command, self.command_index_timer = [5], {move: [[0, 0] for ind in object_dict[self.name]['moveset'][move].get(
+            'command', ())] for move in object_dict[self.name]['moveset'] if object_dict[self.name]['moveset'][move].get('command', False)}
+        self.mass, self.scale, self.time_kill, self.gauges, self.boxes = object_dict[self.name]['mass'], object_dict[self.name]['scale'], object_dict[self.name]['timekill'], {
+            gauge: object_dict[self.name]['gauges'][gauge]['inicial'] for gauge in object_dict[self.name]['gauges']}, object_dict[self.name]['boxes']
+        self.cancel, self.ignore_stop, self.hold_on_stun, self.kara, self.hitstun, self.hitstop = [
+            0], False, False, 0, 0, 0
+        self.speed, self.acceleration, self.con_speed, self.air_time, self.air_max_height = [
+            0, 0], [0, 0], [0, 0], 0, 0
+        self.fet, self.current_state, self.buffer_state, self.wallbounce = 'grounded', 'Stand', {}, False
+        self.combo, self.parry, self.juggle, self.damage_scaling, self.last_damage = 0, [
+            '6', 0], 100, [100, 100], [0, 0]
+        self.voice_channel, self.sound_channel = mixer.Channel(
+            self.team), mixer.Channel(self.team+2)
+        self.move_raw_input = {move: [] for move in object_dict[self.name]['moveset']
+                               if object_dict[self.name]['moveset'][move].get('command', False)}
+        if inicial_state:
+            get_state(self, {inicial_state: 2}, 1), next_frame(
+                self, object_dict[self.name]['moveset'][self.current_state]['framedata'][0])
+  
+        self.grabed = None
+        self.repeat = 0
+
+        self.image_tint = (255, 255, 255, 255)
+        self.image_angle = (0, 0, 0)
+        self.image_repeat = False
+        self.image_glow = 0
+
+        self.game = game

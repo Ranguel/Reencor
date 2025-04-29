@@ -5,13 +5,8 @@ import random
 import math
 import string
 
-import zipfile
-from io import BytesIO
-
 from Util.OpenGL_Renderer import *
 
-object_list = []
-everything_list = []
 
 color = [(255, 0, 0, 200), (0, 0, 255, 200), (0, 255, 0, 200), (255, 255, 0, 200),
          (255, 0, 255, 200), (0, 255, 255, 200), (255, 255, 255, 200), (0, 0, 0, 200)]
@@ -36,7 +31,7 @@ dummy_json = {
     "music": "",
     "terminal_velocity": 1,
     "gauges": {},
-    "boxes": {"hurtbox": {"boxes": []}, "hitbox": {"boxes": [], "hitset": 1}, "takebox": {"boxes": []}, "grabbox": {"boxes": []}, "pushbox": {"boxes": []}, "triggerbox": {"boxes": []}, "boundingbox": {"boxes": [[-75, 0, 150, 310]], "friction": 0.7}},
+    "boxes": {"hurtbox": {"boxes": []}, "hitbox": {"boxes": [], "hitset": 1}, "takebox": {"boxes": []}, "grabbox": {"boxes": []}, "pushbox": {"boxes": []}, "triggerbox": {"boxes": []}, "boundingbox": {"boxes": [[-75, 0, 150, 310]], "grounded_friction": 0.7}},
     "offset": [0, 0],
     "timekill": False,
     "trials": [],
@@ -51,7 +46,7 @@ def nomatch(*args): pass
 def gradient_color(value, max_value, color1, color2):
     if len(color1) == 3:
         color1 += [255]
-    if len(color1) == 3:
+    if len(color2) == 3:
         color2 += [255]
     if max_value == 0:
         return (0, 0, 0)
@@ -60,7 +55,10 @@ def gradient_color(value, max_value, color1, color2):
     r = int(color1[0] + (color2[0] - color1[0]) * t)
     g = int(color1[1] + (color2[1] - color1[1]) * t)
     b = int(color1[2] + (color2[2] - color1[2]) * t)
-    a = int(color1[3] + (color2[3] - color1[3]) * t)
+    try:
+        a = int(color1[3] + (color2[3] - color1[3]) * t)
+    except:
+        print(max_value, color1, color2)
     return (r, g, b, a)
 
 
@@ -88,21 +86,15 @@ def weighted_choice(options):
     return random.choices(values, weights=probabilities, k=1)[0]
 
 
-def get_object_per_team(team: int = 0, opposite: bool = True, class_name='CharacterActiveObject'):
+def get_object_per_team(object_list, team: int = 0, opposite: bool = True, class_name='CharacterActiveObject'):
     for self in object_list:
         if self.__class__.__name__ == class_name:
             if (self.team != team and opposite) or (self.team == team and opposite == False):
                 return self
 
 
-def get_object_per_class(class_name: str = 'CharacterActiveObject'):
+def get_object_per_class(object_list, class_name: str = 'CharacterActiveObject'):
     for self in object_list:
-        if self.__class__.__name__ == class_name:
-            return self
-
-
-def get_object_per_class_ev(class_name: str = 'CharacterActiveObject'):
-    for self in everything_list:
         if self.__class__.__name__ == class_name:
             return self
 
@@ -121,37 +113,14 @@ def update_display_shake(self):
 
 
 def normalize_vector(x, y, base=1):
-    magnitude = math.sqrt(x**2 + y**2)  # Calcular la magnitud del vector
+    magnitude = math.sqrt(x**2 + y**2)
     if magnitude == 0:
-        return [0, 1 * base]  # Caso especial cuando el vector es (0,0)
-    # Normalización estándar
+        return [0, 1 * base]
     return [x / magnitude * base, y / magnitude * base]
-
-
-def unzip_if_needed(path):
-    for root, _, files in os.walk(path):
-        for file in files:
-            if file.lower().endswith('.zip'):
-                zip_path = os.path.join(root, file)
-                folder_name = os.path.splitext(file)[0]
-
-                folder_exists = False
-                for sub_root, dirs, _ in os.walk(path):
-                    if folder_name in dirs:
-                        folder_exists = True
-                        break
-
-                if not folder_exists:
-                    extract_path = os.path.join(root, folder_name)
-                    print(f"Descomprimiendo: {zip_path} -> {extract_path}")
-                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                        zip_ref.extractall(extract_path)
 
 
 def get_dictionaries(current_dir):
     path = current_dir + '/Assets'
-
-    unzip_if_needed(path)
 
     def get_parent_key(filepath):
         parts = filepath.replace('\\', '/').split('/')
@@ -162,26 +131,27 @@ def get_dictionaries(current_dir):
         else:
             return os.path.splitext(parts[-1])[0]
 
-    def load_from_file(key, ext, data):
+    def load_from_path(key, ext, full_path):
         if ext in ['png', 'jpg', 'jpeg']:
             try:
-                image_dict[key] = load_image_bites(data)
-            except:
-                pass
+                image_dict[key] = load_image_path(full_path)
+            except Exception as e:
+                print(f"Image load failed for {key}: {e}")
         elif ext in ['wav', 'ogg', 'mp3']:
             try:
-                sound_dict[key] = pygame.mixer.Sound(BytesIO(data))
-            except:
-                pass
+                sound_dict[key] = pygame.mixer.Sound(full_path)
+            except Exception as e:
+                print(f"Sound load failed for {key}: {e}")
         elif ext in ['json', 'xml']:
             try:
-                ob_json = dummy_json | json.loads(data.decode('utf-8'))
-                for box in dummy_json['boxes']:
-                    ob_json["boxes"][box] = dummy_json['boxes'][box] | ob_json["boxes"].get(box, {
-                    })
-                object_dict[key] = ob_json
-            except:
-                pass
+                with open(full_path, 'r', encoding='utf-8') as f:
+                    ob_json = dummy_json | json.load(f)
+                    for box in dummy_json['boxes']:
+                        ob_json["boxes"][box] = dummy_json['boxes'][box] | ob_json["boxes"].get(box, {
+                        })
+                    object_dict[key] = ob_json
+            except Exception as e:
+                print(f"JSON load failed for {key}: {e}")
 
     if os.path.isdir(path):
         for root, _, files in os.walk(path):
@@ -189,12 +159,11 @@ def get_dictionaries(current_dir):
                 ext = name.lower().split('.')[-1]
                 full_path = os.path.join(root, name)
                 key = get_parent_key(os.path.relpath(full_path, path))
-                with open(full_path, 'rb') as f:
-                    load_from_file(key, ext, f.read())
+                load_from_path(key, ext, full_path)
 
     font = pygame.font.Font(current_dir + '/Util/unispace bd.ttf', 38)
     for i in list(string.ascii_letters + string.digits) + ['+', '-', ' ', ':', '_']:
-        image_dict['font ' + i] = font_texture(font, i, (126, 126, 126))
+        image_dict['font ' + i] = font_texture(font, i, (255, 255, 255))
 
     return image_dict, sound_dict, object_dict
 
@@ -203,14 +172,14 @@ def string_size(string=str, scale=(1, 1)):
     offset_turn = 0
     for i in string:
         offset_turn += image_dict['font '+i][1][0]*scale[0]
-    return offset_turn
+    return offset_turn, image_dict['font '+i][1][1]*scale[1]
 
 
-def draw_string(screen, string=str, pos=(0, 0, 0), scale=(1, 1), color=(255, 255, 255, 255), alignment='right'):
+def draw_string(screen, string=str, pos=(0, 0, 0), scale=(1, 1), color=(255, 255, 255, 255), alignment='right', top:bool=True):
     offset_turn = 0
     for i in string:
         screen.draw_texture(image_dict['font '+i][0], (pos[0]+offset_turn * scale[0]-(0 if alignment == 'right' else sum([image_dict['font '+n][1][0]for n in string])
-                                                                                      * scale[0]), pos[1], pos[2]), (image_dict['font '+i][1][0]*scale[0], image_dict['font '+i][1][1]*scale[1]), (False, False), color, [0, 0, 0], False, 1)
+                                                                                      * scale[0]), pos[1], pos[2]), (image_dict['font '+i][1][0]*scale[0], image_dict['font '+i][1][1]*scale[1]), (False, False), color, [0, 0, 0], False, 1, top)
         offset_turn += image_dict['font '+i][1][0]
 
 
@@ -220,7 +189,7 @@ mirror_pad = {'1': '3', '3': '1', '4': '6', '6': '4', '7': '9', '9': '7', '12': 
 
 def get_command(self, state=[]):
     state = [self.current_state, 'crouch' if self.boxes['hurtbox'].get(
-        'crouch') != None else 'stand']+state
+        'crouch') != None else 'stand']+["defeated" if self.gauges.get('health',1)<=0 else "alive"]+state
     for move in self.command_index_timer:
         for index in range(len(self.command_index_timer[move])):
 
@@ -242,9 +211,9 @@ def get_command(self, state=[]):
 
 def get_state(self, buffer={}, force=0):
     for move in {m: buffer[m] for m in object_dict[self.name]['moveset'] if m in buffer}:
-        if force or (self.fet in object_dict[self.name]['moveset'][move].get('state', 'grounded') and ((self.frame == [0, 0] or (('kara' in object_dict[self.name]['moveset'][move].get('cancel', ["neutral"]) and self.kara and 'kara'not in object_dict[self.name]['moveset'][self.current_state].get('cancel', ["neutral"])) or (set(self.cancel).intersection(object_dict[self.name]['moveset'][move].get('cancel', ["neutral"])))))) and self.gauges.get('pressure', 0) >= object_dict[self.name]['moveset'][move].get('use pressure', 0)):
-            if object_dict[self.name]['moveset'][move].get('use pressure', 0):
-                self.gauges['pressure'] -= object_dict[self.name]['moveset'][move]['use pressure']
+        if force or (self.fet in object_dict[self.name]['moveset'][move].get('state', 'grounded') and ((self.frame == [0, 0] or (('kara' in object_dict[self.name]['moveset'][move].get('cancel', ["neutral"]) and self.kara and 'kara'not in object_dict[self.name]['moveset'][self.current_state].get('cancel', ["neutral"])) or (set(self.cancel).intersection(object_dict[self.name]['moveset'][move].get('cancel', ["neutral"])))))) and self.gauges.get('super', 0) >= object_dict[self.name]['moveset'][move].get('bar_use', 0)):
+            if object_dict[self.name]['moveset'][move].get('bar_use', 0):
+                self.gauges['super'] -= object_dict[self.name]['moveset'][move]['bar_use']
             self.current_state, self.boxes, self.frame, self.kara, self.buffer_state, self.acceleration, self.con_speed, self.hitstun, self.repeat = move, dict(
                 object_dict[self.name]['boxes']), [len(object_dict[self.name]['moveset'][move]['framedata']), 0], 2, {}, [0, 0], [0, 0], -1 if ('ummble' in move and self.fet == 'airborne')else self.hitstun, 0
 
@@ -268,7 +237,7 @@ def next_frame(self, state):
 def object_kill(self, *args):
     """Kill the object instantly."""
     try:
-        object_list.remove(self)
+        self.game.object_list.remove(self)
     except:
         pass
 
@@ -293,9 +262,9 @@ def object_hit_damage(self: object, damage=(10, 0), other=object, *args):
 
 def object_hit_hitgain(self: object, gain=(5, 0), other=object, *args):
     """Special bar Gain, applies to the object that hits and the object hit. Gain on Parry is 0. 'Gain':(Gain on hit, Gain on block)"""
-    self.gauges['pressure'] += {'parry': 0, 'block': gain[0]
+    self.gauges['super'] += {'parry': 0, 'block': gain[0]
                                 [1], 'hurt': gain[0][0]}.get(other.current_command[0], 0)
-    other.gauges['pressure'] += {'parry': 8, 'block': gain[1]
+    other.gauges['super'] += {'parry': 8, 'block': gain[1]
                                  [1], 'hurt': gain[1][0]}.get(other.current_command[0], 0)
 
 
@@ -320,7 +289,7 @@ def object_hit_hitstop(self: object, stop=10, other=object, *args):
     object_display_shake(other, [20*self.face if tipe else other.speed[0], 0 if tipe else other.speed[1],
                                  self.hitstop if tipe else other.hitstop, 'other' if tipe else 'self'], self)
 
-    object_display_shake(get_object_per_team(self.team, False, 'Combo_Counter'), [
+    object_display_shake(get_object_per_team(self.game.object_list, self.team, False, 'Combo_Counter'), [
         other.speed[0], other.speed[1], 20, 'self'], self)
 
 
@@ -344,15 +313,20 @@ def object_hit_knockback(self: object, knockback={"grounded": [14, 0]}, other=ob
     speed[0] = speed[0]*self.face
     other.speed, other.fet, other.face, other.pos[1] = speed, 'airborne' if speed[1] > 0 and other.fet == 'grounded' else 'grounded', 1 if self.self_main_object.pos[
         0] > other.pos[0] else -1, other.pos[1]-(10 if speed[1] > 0 and other.fet == 'grounded' else 0)
+    if other.gauges['health']<=0:
+        speed[1] = 20
+        other.fet = 'airborne'
 
 
 def object_hit_hittipe(self: object, hittipe: list = ['medium', 'middle'], other: object = object, *args):
     """Determines the type of hit. Super, Special, Heavy, Medium or Light. High, Mid or Low. A specific hit type can be added to initiate a unique hit animation. 'Hittipe': [hit tipe 1, hit tipe 2,,, hit tipe N]"""
     self.damage_scaling, other.frame = [self.self_main_object.damage_scaling[0]-attack_tipe_value[[tipe for tipe in attack_tipe_value if tipe in hittipe]
                                                                                                   [0]]['scaling'], attack_tipe_value[[tipe for tipe in attack_tipe_value if tipe in hittipe][0]]['min_scaling']], [0, 0]
+    if other.gauges['health']<=0:
+        hittipe = hittipe+["sidetummble"]
     if 'hurt' in other.current_command:
         other.current_command, other.cancel, other.pos[1] = other.current_command+list(
-            hittipe), [None], other.pos[1]-1 if other.fet == 'grounded' and self.boxes['hitbox']['knockback'].get("grounded", [14, 0])[1] else other.pos[1]
+            hittipe), [None], other.pos[1]-1 if other.fet == 'grounded' and self.boxes['hitbox'].get("knockback", {"grounded": [14, 0]}).get("grounded", [14, 0])[1] else other.pos[1]
 
 
 def object_wallbounce(self: object, wallbounce=1, other=object, *args):
@@ -418,8 +392,7 @@ def object_display_shake(self: object, shake=[0, 0, 0, None], other=object, *arg
     if shake[3] == 'other':
         other.draw_shake = [0, 0, 0, shake[0], shake[1], shake[2]]
     if shake[3] == 'camera':
-        game = get_object_per_class_ev("GameObject")
-        game.camera.draw_shake = [0, 0, 0, shake[0], shake[1], shake[2]]
+        self.game.camera.draw_shake = [0, 0, 0, shake[0], shake[1], shake[2]]
 
 
 def object_double_image(self: object, doim=any, *args):
@@ -511,22 +484,21 @@ def object_smear(self: object, image='reencor/none', *args):
 
 def object_gain(self: object, gain=0, *args):
     """Special bar Gain, applies only to the object that hits. Gain on Parry is 0. 'Gain': Number"""
-    self.gauges['pressure'] += gain
+    self.gauges['super'] += gain
     # reward_on(self,1)
 
 
 def object_superstop(self, superstop=1, *args):
     """The Stop applies to all currently active objects. 'Superstop': Number"""
-    for object in object_list:
+    for object in self.game.object_list:
         if object.__class__.__name__ in ('CharacterActiveObject', 'ProjectileActiveObject', 'StageActiveObject'):
             object.hitstop += superstop
 
 
 def object_camera_path(self: object, camera_path=(), *args):
     """The path the camera will follow. 'Camera_path': ()"""
-    game = get_object_per_class_ev("GameObject")
-    game.camera_path, game.frame = {'path': tuple(camera_path['path']), 'object': {
-        'self': self.self_main_object, 'other': self.other_main_object, 'global': game}[camera_path['object']]}, [0, 0]
+    self.game.camera_path, self.game.frame = {'path': tuple(camera_path['path']), 'object': {
+        'self': self.self_main_object, 'other': self.other_main_object, 'global': self.game}[camera_path['object']]}, [0, 0]
 
 
 def object_hurtbox(self: object, hurtbox={'boxes': []}, *args):
@@ -637,6 +609,7 @@ def object_trigger_state(self: object, state='Stand', *args):
 def object_influence(self: object, who=None, other=object, *args):
     if who == 'other':
         self.object_influence, other.grabed = other, self
+        other.grabed.frame = [0, 0]
     elif who == 'global':
         game = get_object_per_class('GameObject')
         self.object_influence, other.grabed = other, game
@@ -669,14 +642,14 @@ def object_stop(self: object, stop=0, *args):
 def object_create_VisualEffectObject(self: object, o=(), *args):
     """Creates a new object, projectile or any other kind of object."""
     from Util.Active_Objects import VisualEffectObject
-    object_list.append(VisualEffectObject(
-        o[0], (self.pos[0]+o[1][0]*self.face, self.pos[1]-o[1][1]), self.face*o[2], o[3], o[4]))
+    self.game.object_list.append(VisualEffectObject(
+        self.game, o[0], (self.pos[0]+o[1][0]*self.face, self.pos[1]-o[1][1]), self.face*o[2], o[3], o[4]))
 
 
 def object_create_ProjectileActiveObject(self: object, o=(), *args):
     """Creates a new object, projectile or any other kind of object."""
     from Util.Active_Objects import ProjectileActiveObject
-    object_list.append(ProjectileActiveObject(self.team, self.inputdevice, o[0], (
+    self.game.object_list.append(ProjectileActiveObject(self.game, self.team, self.inputdevice, o[0], (
         self.pos[0]+o[1][0]*self.face, self.pos[1]-o[1][1]), self.face*o[2], o[3], o[4]))
 
 
@@ -689,7 +662,7 @@ function_dict = {
     'hitstop': object_hit_hitstop,  # hitstop
     'hitstun': object_hit_hitstun,  # hitstun
     'stamina': object_hit_stamina,  # stun bar or stamina
-    'hit pressure': object_hit_hitgain,  # bar gain
+    'hit_bar_gain': object_hit_hitgain,  # bar gain
     'hittipe': object_hit_hittipe,  # hit type force, style
     'juggle': object_hit_juggle,
     'wallbounce': object_wallbounce,
@@ -727,7 +700,7 @@ function_dict = {
     'ignore_stop': object_ignore_stop,  # ignore hitstop #dict
     'hold_on_stun': object_hold_on_stun,  # ignore hitstop #dict
     'smear': object_smear,  # ignore hitstop #dict
-    'pressure': object_gain,  # ignore hitstop #dict
+    'bar_gain': object_gain,  # ignore hitstop #dict
 
     'superstop': object_superstop,  # stop in every object except self
     'camera_path': object_camera_path,  # camera path and zoom

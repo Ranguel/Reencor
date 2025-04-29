@@ -1,6 +1,6 @@
 from itertools import combinations, permutations
 from Util.Active_Objects import VisualEffectObject
-from Util.Object_functions import colors, object_dict, object_list, function_dict, default_hitbox, attack_tipe_value, get_object_per_team, get_object_per_class, get_command, get_state, next_frame
+from Util.Object_functions import colors, object_dict, function_dict, default_hitbox, attack_tipe_value, get_object_per_team, get_object_per_class, get_command, get_state, next_frame
 
 
 def box_collide(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h): return r1x < r2x + \
@@ -24,14 +24,15 @@ def boundingbox_boundingbox_collide(self, other, game, *args):
                                 self, object_dict[self.name]['moveset'][self.current_state]['framedata'][-self.frame[0]])
                     if not self.hitstop:
                         if not self.hitstun:
-                            self.speed[0] *= self.boxes['boundingbox']['friction']
+                            self.speed[0] *= self.boxes['boundingbox'].get('grounded_friction', 0.7)
                         else:
                             self.speed[0] *= 0.85
 
                     self.pos[1], self.speed[1] = other.pos[1]-bu[1]-bu[3] + \
                         1, 0 if self.speed[1] < 0 else self.speed[1]
             else:
-                self.fet, self.air_time = 'airborne', self.air_time+1
+                self.fet, self.air_time, self.speed= 'airborne', self.air_time+1, [self.speed[0] * self.boxes['boundingbox'].get('airborne_friction', [1,1])[0], self.speed[1] * self.boxes['boundingbox'].get('airborne_friction', [1,1])[1]]
+
 
         if self.pos[0]+160 > game.pos[0]+game.internal_resolution[0]*0.5:
             if self.wallbounce and 'ummble' in self.current_state:
@@ -40,7 +41,7 @@ def boundingbox_boundingbox_collide(self, other, game, *args):
 
             if len(self.hurt_coll_hit) and self.speed[0] > 0:
                 self.hurt_coll_hit[-1].speed[0] -= self.speed[0]*(
-                    1 if self.hurt_coll_hit[-1].fet == 'airborne' else 0.9/self.hurt_coll_hit[-1].boxes['boundingbox']['friction'])
+                    1 if self.hurt_coll_hit[-1].fet == 'airborne' else 0.9/self.hurt_coll_hit[-1].boxes['boundingbox'].get('grounded_friction', 0.7))
                 self.hurt_coll_hit = []
 
             self.pos[0] = game.pos[0]+game.internal_resolution[0]*0.5-160
@@ -52,7 +53,7 @@ def boundingbox_boundingbox_collide(self, other, game, *args):
 
             if len(self.hurt_coll_hit) and self.speed[0] < 0:
                 self.hurt_coll_hit[-1].speed[0] -= self.speed[0]*(
-                    1 if self.hurt_coll_hit[-1].fet == 'airborne' else 0.9/self.hurt_coll_hit[-1].boxes['boundingbox']['friction'])
+                    1 if self.hurt_coll_hit[-1].fet == 'airborne' else 0.9/self.hurt_coll_hit[-1].boxes['boundingbox'].get('grounded_friction', 0.7))
                 self.hurt_coll_hit = []
 
             self.pos[0] = game.pos[0]-game.internal_resolution[0]*0.5+160
@@ -109,8 +110,8 @@ def trigger_hurtbox_collide(self, other, *args):
 
 def calculate_boxes_collitions(game, *args):
     active_objects = [
-        self for self in object_list if self.__class__.__name__ in ('CharacterActiveObject', 'ProjectileActiveObject')]
-    main_stage = get_object_per_class('StageActiveObject')
+        self for self in game.object_list if self.__class__.__name__ in ('CharacterActiveObject', 'ProjectileActiveObject')]
+    main_stage = get_object_per_class(game.object_list, 'StageActiveObject')
 
     for self, other in permutations(active_objects, 2):
         trigger_hurtbox_collide(self, other), takebox_grabbox_collide(
@@ -121,9 +122,9 @@ def calculate_boxes_collitions(game, *args):
     for self in active_objects:
 
         if self.self_main_object == None:
-            self.self_main_object = get_object_per_team(self.team, False)
+            self.self_main_object = get_object_per_team(game.object_list, self.team, False)
         if self.other_main_object == None:
-            self.other_main_object = get_object_per_team(self.team)
+            self.other_main_object = get_object_per_team(game.object_list, self.team)
 
         for other in self.take_coll_grab:
             for value in function_dict:
@@ -145,24 +146,24 @@ def calculate_boxes_collitions(game, *args):
             hitbox = default_hitbox | self.boxes['hitbox']
             tipe, ri, ru = ['hurt'], .8+(self.combo/2)+1 if (
                 0 not in other.cancel) else 0, -.8-(self.combo/4)-1 if (0 not in other.cancel) else 0
-            if set(other.cancel).intersection(('neutral', 'interruption', "blocking")) and (other.inputdevice.current_input[0] == ('3'if (self.self_main_object.pos[0]-other.pos[0]) < 0 else '1')) and other.fet == 'grounded':
+            if set(other.cancel).intersection(('neutral', 'interruption', "blocking")) and ((other.inputdevice.current_input[0] == ('3'if (self.self_main_object.pos[0]-other.pos[0]) < 0 else '1'))or other.guard =='block') and other.fet == 'grounded':
                 if set(hitbox['hittipe']).intersection(('low', 'middle')):
                     tipe, ri, ru = ['block', 'crouch'], .1, .3
                 else:
                     ri, ru = ri+.4, ru-.3
-            elif set(other.cancel).intersection(('neutral', 'interruption', "blocking")) and (other.inputdevice.current_input[0] == ('6'if (self.self_main_object.pos[0]-other.pos[0]) < 0 else '4')) and other.fet == 'grounded':
+            elif set(other.cancel).intersection(('neutral', 'interruption', "blocking")) and ((other.inputdevice.current_input[0] == ('6'if (self.self_main_object.pos[0]-other.pos[0]) < 0 else '4'))or other.guard =='block') and other.fet == 'grounded':
                 if set(hitbox['hittipe']).intersection(('high', 'middle')):
                     tipe, ri, ru = ['block', 'stand'], .1, .3
                 else:
                     ri, ru = ri+.4, ru-.3
-            elif set(other.cancel).intersection(('neutral', 'interruption', "parry", "blocking")) and (other.parry[0] == ('1'if (self.self_main_object.pos[0]-other.pos[0]) < 0 else '3')):
-                if set(hitbox['hittipe']).intersection(('low', 'middle')) and other.parry[1] >= 16:
+            elif set(other.cancel).intersection(('neutral', 'interruption', "parry", "blocking")) and ((other.parry[0] == ('1'if (self.self_main_object.pos[0]-other.pos[0]) < 0 else '3'))or other.guard =='parry'):
+                if set(hitbox['hittipe']).intersection(('low', 'middle')) and (other.parry[1] >= 16 or other.guard =='parry'):
                     other.parry[1], tipe, ri, ru = 0, [
                         'parry', 'crouch'], -.2, .6
                 else:
                     ri, ru = ri+.5, ru-.4
-            elif set(other.cancel).intersection(('neutral', 'interruption', "parry", "blocking")) and (other.parry[0] == ('4'if (self.self_main_object.pos[0]-other.pos[0]) < 0 else '6')):
-                if set(hitbox['hittipe']).intersection(('high', 'middle')) and other.parry[1] >= 16:
+            elif set(other.cancel).intersection(('neutral', 'interruption', "parry", "blocking")) and ((other.parry[0] == ('4'if (self.self_main_object.pos[0]-other.pos[0]) < 0 else '6'))or other.guard =='parry'):
+                if set(hitbox['hittipe']).intersection(('high', 'middle')) and (other.parry[1] >= 16 or other.guard =='parry'):
                     other.parry[1], tipe, ri, ru = 0, [
                         'parry', 'stand'], -.2, .6
                 else:
@@ -172,7 +173,7 @@ def calculate_boxes_collitions(game, *args):
             self.self_main_object.combo, other.current_command, self.current_command = self.self_main_object.combo * \
                 bool(other.hitstun)+1, tipe+hitbox['hittipe'], self.current_command+[
                     'parried' if 'parry' in tipe else 'blocked' if 'block' in tipe else 'hited']
-            object_list.append(VisualEffectObject('SF3/Sparks', (self.box[0]+self.box[2]/2, self.box[1]+self.box[3]/2), self.face, 0, [
+            game.object_list.append(VisualEffectObject(self.game, 'SF3/Sparks', (self.box[0]+self.box[2]/2, self.box[1]+self.box[3]/2), self.face, 0, [
                 tipe for tipe in attack_tipe_value if tipe in other.current_command][0]))
             for value in function_dict:
                 if hitbox.get(value, None) != None:
