@@ -2,6 +2,11 @@
  
 A retro-inspired 2D fighting game featuring classic-style sprites, Pygame, and OpenGL.
 
+## Demo Video
+
+Check out the gameplay demo on Reddit:  
+[View the demo here](https://www.reddit.com/r/pygame/comments/1kagi71/opensource_2d_fighting_game_engine_new_update/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+
 ## Version
 
 **Version:** 0.3.1 (Pre-Alpha)
