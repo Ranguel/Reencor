@@ -1,18 +1,85 @@
-# ignore images
-Assets/images/SF3
-Assets/images/SVC
-
-# ignore sounds
-Assets/sounds/SF3
-
-# ignore temporal
-*.pyc
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
 
-# ignore VSCode conf
+# Virtual environment
+.env/
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VSCode config (optional to ignore user settings)
 .vscode/
 
-# ignore system files
-Thumbs.db
+# macOS system files
 .DS_Store
+.AppleDouble
+.LSOverride
 
+# macOS Finder metadata
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# macOS resource forks
+*.AppleDouble
+
+# macOS volume settings
+.VolumeIcon.icns
+
+# Files that might appear on external disk drives
+.fseventsd
+.TemporaryItems
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Python-specific cache
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+
+# Test and coverage output
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+*.pytest_cache/
+
+# PyInstaller
+*.spec
+dist/
+build/
+
+# IDEs and editors
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Misc
+*.swp
+*.bak
+*.tmp
+
+# Unshared files
+Assets/images/SF3/
+Assets/images/SVC/
+
+Assets/sounds/SF3/
+Assets/sounds/SVC/
