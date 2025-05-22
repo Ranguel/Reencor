@@ -6,10 +6,10 @@ class CustomJSONEncoder(json.JSONEncoder):
         if isinstance(obj, dict):
             formatted_items = []
             for key, value in obj.items():
-                if isinstance(value, dict) and key == "moveset":
-                    formatted_moveset = ",\n    ".join(
+                if isinstance(value, dict) and key == "states":
+                    formatted_states = ",\n    ".join(
                         f'"{k}": {json.dumps(v)}' for k, v in value.items())
-                    formatted_value = "{\n    " + formatted_moveset + "\n}"
+                    formatted_value = "{\n    " + formatted_states + "\n}"
                 elif isinstance(value, dict):
                     formatted_value = json.dumps(value, separators=(',', ': '))
                 else:

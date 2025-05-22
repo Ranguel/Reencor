@@ -1,0 +1,13 @@
+{
+    "type":"bar",
+    "name": "health",
+    "bar": {"start": [-70,370],"end": [-550,370],"thickness": 10,"color": [[255,255,20],[20,255,20]],"level": 1},
+    "object_portrait": {"pos": ["-600","370",0],"size": [120,100,0]},
+    "scale":1,
+    "def_image_size":[10,10,0],
+    "def_image_offset":[0,0,0],
+    "palette":[[]],
+    "states": {
+        "Stand": {"framedata": [{"dur": 20000}]}
+    }
+}

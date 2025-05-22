@@ -1,5 +1,1 @@
-
-
-
-
-print(eval("bool(1)"))
+print(not False or False)

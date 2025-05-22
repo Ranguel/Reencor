@@ -1,29 +1,89 @@
 from pygame import joystick, key
 from random import uniform, choice
-from Util.Object_functions import RoundSign, object_image
+from Util.Common_functions import RoundSign, object_image
 
 
-keyboard_mapping = ((79,), (80,), (82,), (81,), (8,), (26,),
-                    (20,), (7,), (22,), (4,), (21, 92), (21,), (116,))
+keyboard_mapping = (
+    (79,),
+    (80,),
+    (82,),
+    (81,),
+    (8,),
+    (26,),
+    (20,),
+    (7,),
+    (22,),
+    (4,),
+    (21, 92),
+    (21,),
+    (116,),
+)
 
 joystick_name_mapping = {
-    'Nintendo Switch Pro Controller': ((('a', 0), ('b', 14), ('b', 13, 1)), (('a', 1), ('b', 11, 1), ('b', 12)), (('a', 5),), (('b', 0),), (('b', 1),), (('b', 10),), (('b', 2),), (('b', 3),), (('b', 9), ('a', 4),)),
-    'Xbox Controller': ((('a', 0),), (('a', 1),), (('b', 4),), (('b', 3),), (('b', 2),), (('b', 5),), (('b', 1),), (('a', 2),), (('a', 3),)), }
+    "Nintendo Switch Pro Controller": (
+        (("a", 0), ("b", 14), ("b", 13, 1)),
+        (("a", 1), ("b", 11, 1), ("b", 12)),
+        (("a", 5),),
+        (("b", 0),),
+        (("b", 1),),
+        (("b", 10),),
+        (("b", 2),),
+        (("b", 3),),
+        (
+            ("b", 9),
+            ("a", 4),
+        ),
+    ),
+    "Xbox Controller": (
+        (("a", 0),),
+        (("a", 1),),
+        (("b", 4),),
+        (("b", 3),),
+        (("b", 2),),
+        (("b", 5),),
+        (("b", 1),),
+        (("a", 2),),
+        (("a", 3),),
+    ),
+}
 
 
-class InputDevice():
-    def __init__(self, team=1, index=0, mode='none', show=0):
-        self.tipe = 'input'
-        self.team, self.key, self.mode = team, keyboard_mapping, {
-            'keyboard': self.keyboard_mode, 'joystick': self.joystick_mode, 'AI': self.AI_mode, 'record': self.record_mode, 'none': self.none_mode, 'random': self.random_mode}[mode]
-        if mode == 'joystick':
+class InputDevice:
+    def __init__(self, game, team=1, index=0, mode="none"):
+        self.game = game
+        self.type = "input"
+        self.team, self.key, self.mode = (
+            team,
+            keyboard_mapping,
+            {
+                "keyboard": self.keyboard_mode,
+                "joystick": self.joystick_mode,
+                "AI": self.AI_mode,
+                "record": self.record_mode,
+                "none": self.none_mode,
+                "random": self.random_mode,
+            }[mode],
+        )
+        if mode == "joystick":
             self.controller = joystick.Joystick(index)
             self.con = joystick_name_mapping[self.controller.get_name()]
-        self.show, self.press_list_showed = show, [
-            ['false', 'false'] for n in range(9)]
-        self.current_input, self.raw_input, self.current_input, self.last_input, self.press_charge, self.inter_press = [[0, 0], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ['5'], [[0, 0], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0
-        self.mode_name = 'AI'
+        self.press_list_showed = []
+        (
+            self.current_input,
+            self.raw_input,
+            self.current_input,
+            self.last_input,
+            self.press_charge,
+            self.inter_press,
+        ) = (
+            [[0, 0], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ["5"],
+            [[0, 0], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            0,
+        )
+        self.mode_name = "AI"
         self.input_timer = 0
         self.record_timer = 0
         self.recorded_inputs = []
@@ -31,25 +91,94 @@ class InputDevice():
         self.recorded_inputs_index = 0
         self.draw_shake = [0, 0, 0, 0, 0, 0]
         self.rand_timer = 0
+        self.active_object = None
 
-    def axis_button(self, input): return (RoundSign(round(self.controller.get_axis(input[1]))))if input[0] == 'a'else (
-        self.controller.get_button(input[1])*(-1 if len(input) > 2 else 1))
+        self.sequence_commands = (
+            {"command": "QCF", "sequence": ("2", "3", "6"), "press": True},
+            {"command": "QCF", "sequence": ("2", "6"), "press": True},
+            {"command": "QCB", "sequence": ("2", "1", "4"), "press": True},
+            {"command": "QCB", "sequence": ("2", "4"), "press": True},
+            {"command": "DP", "sequence": ("6", "3", "2", "3"), "press": True},
+            {"command": "DP", "sequence": ("3", "2", "3"), "press": True},
+            {"command": "DP", "sequence": ("3", "2", "6"), "press": True},
+            {"command": "DP", "sequence": ("6", "2", "6"), "press": True},
+            {"command": "DP", "sequence": ("6", "2", "3"), "press": True},
+            {"command": "DP", "sequence": ("3", "2", "1", "3"), "press": True},
+            {"command": "Doble_tap_forward", "sequence": ("5", "6", "5", "6")},
+        )
+
+        self.sequence_index = [1 for move in self.sequence_commands]
+
+    def axis_button(self, input):
+        return (
+            (RoundSign(round(self.controller.get_axis(input[1]))))
+            if input[0] == "a"
+            else (self.controller.get_button(input[1]) * (-1 if len(input) > 2 else 1))
+        )
 
     def keyboard_mode(self):
         keyboard = tuple(key.get_pressed())  # index
-        self.raw_input = [sum(keyboard[key] for key in self.key[0]), sum(keyboard[key] for key in self.key[1]), sum(keyboard[key] for key in self.key[2]), sum(keyboard[key] for key in self.key[3]), sum(keyboard[key] for key in self.key[4]), sum(
-            keyboard[key] for key in self.key[5]), sum(keyboard[key] for key in self.key[6]), sum(keyboard[key] for key in self.key[7]), sum(keyboard[key] for key in self.key[8]), sum(keyboard[key] for key in self.key[9]), sum(keyboard[key] for key in self.key[10])]
-        self.get_press([[self.raw_input[0]+self.raw_input[1]*-1, self.raw_input[2]+self.raw_input[3]*-1], self.raw_input[4],
-                        self.raw_input[5], self.raw_input[6], self.raw_input[7], self.raw_input[8], self.raw_input[9], self.raw_input[10]])
+        self.raw_input = [
+            sum(keyboard[key] for key in self.key[0]),
+            sum(keyboard[key] for key in self.key[1]),
+            sum(keyboard[key] for key in self.key[2]),
+            sum(keyboard[key] for key in self.key[3]),
+            sum(keyboard[key] for key in self.key[4]),
+            sum(keyboard[key] for key in self.key[5]),
+            sum(keyboard[key] for key in self.key[6]),
+            sum(keyboard[key] for key in self.key[7]),
+            sum(keyboard[key] for key in self.key[8]),
+            sum(keyboard[key] for key in self.key[9]),
+            sum(keyboard[key] for key in self.key[10]),
+        ]
+        self.get_press(
+            [
+                [
+                    self.raw_input[0] + self.raw_input[1] * -1,
+                    self.raw_input[2] + self.raw_input[3] * -1,
+                ],
+                self.raw_input[4],
+                self.raw_input[5],
+                self.raw_input[6],
+                self.raw_input[7],
+                self.raw_input[8],
+                self.raw_input[9],
+                self.raw_input[10],
+            ]
+        )
 
     def joystick_mode(self):
-        self.raw_input = [(sum((self.axis_button(key))for key in self.con[0]), -sum(self.axis_button(key)for key in self.con[1])), sum(self.axis_button(key)for key in self.con[2]), sum(self.axis_button(key)for key in self.con[3]), sum(self.axis_button(key)
-                                                                                                                                                                                                                                           for key in self.con[4]), sum(self.axis_button(key)for key in self.con[5]), sum(self.axis_button(key)for key in self.con[6]), sum(self.axis_button(key)for key in self.con[7]), sum(self.axis_button(key)for key in self.con[8])]
+        self.raw_input = [
+            (
+                sum((self.axis_button(key)) for key in self.con[0]),
+                -sum(self.axis_button(key) for key in self.con[1]),
+            ),
+            sum(self.axis_button(key) for key in self.con[2]),
+            sum(self.axis_button(key) for key in self.con[3]),
+            sum(self.axis_button(key) for key in self.con[4]),
+            sum(self.axis_button(key) for key in self.con[5]),
+            sum(self.axis_button(key) for key in self.con[6]),
+            sum(self.axis_button(key) for key in self.con[7]),
+            sum(self.axis_button(key) for key in self.con[8]),
+        ]
         self.get_press(self.raw_input)
 
     def AI_mode(self):
-        self.get_press([[self.raw_input[0]+self.raw_input[1]*-1, self.raw_input[2]+self.raw_input[3]*-1], self.raw_input[4],
-                        self.raw_input[5], self.raw_input[6], self.raw_input[7], self.raw_input[8], self.raw_input[9], self.raw_input[10]])
+        self.get_press(
+            [
+                [
+                    self.raw_input[0] + self.raw_input[1] * -1,
+                    self.raw_input[2] + self.raw_input[3] * -1,
+                ],
+                self.raw_input[4],
+                self.raw_input[5],
+                self.raw_input[6],
+                self.raw_input[7],
+                self.raw_input[8],
+                self.raw_input[9],
+                self.raw_input[10],
+            ]
+        )
 
     def record_mode(self):
         pass
@@ -87,34 +216,84 @@ class InputDevice():
             self.rand_timer = uniform(*(10, 60))
             self.raw_input = [choice([0, 1]) for _ in range(11)]
 
-        self.get_press([[self.raw_input[0]+self.raw_input[1]*-1, self.raw_input[2]+self.raw_input[3]*-1], self.raw_input[4],
-                        self.raw_input[5], self.raw_input[6], self.raw_input[7], self.raw_input[8], self.raw_input[9], self.raw_input[10]])
+        self.get_press(
+            [
+                [
+                    self.raw_input[0] + self.raw_input[1] * -1,
+                    self.raw_input[2] + self.raw_input[3] * -1,
+                ],
+                self.raw_input[4],
+                self.raw_input[5],
+                self.raw_input[6],
+                self.raw_input[7],
+                self.raw_input[8],
+                self.raw_input[9],
+                self.raw_input[10],
+            ]
+        )
 
     def get_press(self, raw_input):
         self.inter_press = 0
         self.current_input.clear()
 
         # ↙↓↘←•→↖↑↗
-        dpad = [['8', '2', '5'], ['9', '3', '6'], [
-            '7', '1', '4']][raw_input[0][0]][raw_input[0][1]-1]
-        dpad_trasition = (str([['8', '2', '5'], ['9', '3', '6'], [
-                          '7', '1', '4']][self.last_input[0][0]][self.last_input[0][1]-1])+str(dpad))
-        pressed_buttons = ["p_b"+str(ind) for ind in range(1, len(raw_input))if (
-            raw_input[ind] == 1 and self.last_input[ind] == 0)]
-        released_buttons = ["r_b"+str(ind) for ind in range(1, len(raw_input))if (
-            raw_input[ind] == 0 and self.last_input[ind] == 1)]
-        holded_buttons = ["h_b"+str(ind) for ind in range(1, len(raw_input))
-                          if (raw_input[ind] == 1 and self.last_input[ind] == 1)]
+        dpad = [["8", "2", "5"], ["9", "3", "6"], ["7", "1", "4"]][raw_input[0][0] * (1 if self.active_object == None else self.active_object.face)][
+            raw_input[0][1] - 1
+        ]
+        dpad_trasition = str(
+            [["8", "2", "5"], ["9", "3", "6"], ["7", "1", "4"]][self.last_input[0][0] * (1 if self.active_object == None else self.active_object.face)][
+                self.last_input[0][1] - 1
+            ]
+        ) + str(dpad)
+        pressed_buttons = [
+            "p_b" + str(ind)
+            for ind in range(1, len(raw_input))
+            if (raw_input[ind] == 1 and self.last_input[ind] == 0)
+        ]
+        released_buttons = [
+            "r_b" + str(ind)
+            for ind in range(1, len(raw_input))
+            if (raw_input[ind] == 0 and self.last_input[ind] == 1)
+        ]
+        holded_buttons = [
+            "h_b" + str(ind)
+            for ind in range(1, len(raw_input))
+            if (raw_input[ind] == 1 and self.last_input[ind] == 1)
+        ]
+        commands = []
+        for index, move in enumerate(self.sequence_commands):
+            if (
+                dpad
+                is self.sequence_commands[index]["sequence"][self.sequence_index[index]]
+                and dpad_trasition[0]
+                is self.sequence_commands[index]["sequence"][
+                    self.sequence_index[index] - 1
+                ]
+            ):
+                self.sequence_index[index] = self.sequence_index[index] + 1
+                if self.sequence_index[index] >= len(
+                    self.sequence_commands[index]["sequence"]
+                ):
+                    self.sequence_index[index] = 1  # if move.get("press", False) else 1
+                    commands.append(move["command"])
 
         for index in range(1, 7):
             self.press_charge[index] = (
-                (self.press_charge[index] + 1) if "h_b"+str(index) in holded_buttons else (0))
+                (self.press_charge[index] + 1)
+                if "h_b" + str(index) in holded_buttons
+                else (0)
+            )
             if self.press_charge[index] == 1 and pressed_buttons:
-                pressed_buttons.append("p_b"+str(index))
+                pressed_buttons.append("p_b" + str(index))
             if self.press_charge[index] > 40:
                 holded_buttons.append("charge_b" + str(index))
-        self.current_input = [dpad, dpad_trasition] + \
-            pressed_buttons + released_buttons + holded_buttons
+        self.current_input = (
+            [dpad, dpad_trasition]
+            + pressed_buttons
+            + released_buttons
+            + holded_buttons
+            + commands
+        )
 
         if raw_input != self.last_input:
             self.inter_press = 1
@@ -130,10 +309,24 @@ class InputDevice():
         self.mode()
 
     def draw(self, screen, pos, *args):
-        for index in range(len(self.press_list_showed)):
-            turn = 0
-            for input in self.press_list_showed[index]:
-                object_image(self, 'reencor/'+input)
-                screen.draw_texture(self.image, (pos[0]+(-600 if self.team == 1 else 575)+25*turn*(
-                    1 if self.team == 1 else -1), pos[1]+260-25*(index), -10), [self.real_image_size[0]/2, self.real_image_size[1]/2])
-                turn += 1
+        if self.mode!= "none":
+            for index in range(len(self.press_list_showed)):
+                turn = 0
+                for input in self.press_list_showed[index]:
+                    if "reencor/" + input in self.game.image_dict:
+                        image_key, image_size = self.game.image_dict["reencor/" + input]
+                    else:
+                        continue
+                    screen.draw_texture(
+                        image_key,
+                        (
+                            pos[0] + (-600 if self.team == 1 else 575) + 25 * turn * (1 if self.team == 1 else -1),
+                            pos[1] -300 + 25 * (index),
+                            -10,
+                        ),
+                        [20, 20],
+                    )
+                    turn += 1
+
+
+dummy_input = InputDevice(None, 0, 0, "none")

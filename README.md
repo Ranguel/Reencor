@@ -9,7 +9,7 @@ Check out the gameplay demo on Reddit:
 
 ## Version
 
-**Version:** 0.3.1 (Pre-Alpha)
+**Version:** 0.3.2 (Pre-Alpha)
 
 ## Features
 
@@ -36,6 +36,22 @@ You can download the sprites from the following source:
 - [SNK vs Capcom - Terry Bogard (The Spriters Resource)](https://www.spriters-resource.com/download/42433/)
 
 Unzip the file and place the folder in the `Assets/images` folder before running the game.
+
+## 🎮 Basic Controls
+
+| Action              | Input                    |
+|---------------------|--------------------------|
+| Move Left           | ←                        |
+| Move Right          | →                        |
+| Crouch              | ↓                        |
+| Jump                | ↑                        |
+| Light Punch (LP)    | A                        |
+| Medium Punch (MP)   | S                        |
+| Heavy Punch (HP)    | D                        |
+| Light Kick (LK)     | Q                        |
+| Medium Kick (MK)    | W                        |
+| Heavy Kick (HK)     | E                        |
+| Special Move (e.g., Hadouken) | ↓ ↘ → + Punch |
 
 ## How to Run
 

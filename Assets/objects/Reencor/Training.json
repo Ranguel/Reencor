@@ -1,5 +1,5 @@
 {
-    "tipe":"stage",
+    "type":"stage",
     "name": "Trining Stage", 
     "portrait": "02_Ryu/03286",
     "light":[-1,1,-3,0],
@@ -10,17 +10,14 @@
     "mass":100000,
     "terminal_velocity":0,
     "timekill":false,
-    "def_image_size":[10000,10000],
-    "def_image_offset":[0,0],
+    "def_image_size":[10000,10000,0],
+    "def_image_offset":[0,0,0],
     "palette":[[]],
     "gauges":[],
-    "boxes":{"boundingbox":{"boxes":[[-4000,-950,8000,400]]}},
-    "camera_focus_point_limit":[[-1300,1300],[850,-100]],
+    "boxes":{"boundingbox":{"boxes":[[-4000,-400,8000,400]]}},
+    "camera_focus_point_limit":[[-1300,1300],[1000,-80]],
     "trials":[],
-    "layers":{
-        "back":{"image":"reencor/grid","pos":[-1305,-800,250],"image_size":[2610,1800],"angle":[0,0,0],"repeat":true},
-        "right":{"image":"reencor/grid","pos":[-1550,-800,0],"image_size":[500,1800],"angle":[0,-90,0],"repeat":true},
-        "left":{"image":"reencor/grid","pos":[1050,-800,0],"image_size":[500,1800],"angle":[0,90,0],"repeat":true},
-        "floor":{"image":"reencor/grid","pos":[-1305,550,0],"image_size":[2610,500],"angle":[90,0,0],"repeat":true}
-}
+    "states": {
+        "Stand": {"framedata": [{"dur": 20000, "image":"reencor/grid","image_offset":[1305,-250,0],"image_size":[2610,500],"image_angle":[-90,0,0],"image_repeat":true,"draw_textures": [{"dur": 20000,"image":"reencor/grid","image_offset":[1305,0,-250],"image_size":[2610,2000],"image_angle":[0,0,0],"image_repeat":true},{"dur": 20000,"image":"reencor/grid","image_offset":[1555,0,0],"image_size":[500,2000],"image_angle":[0,90,0],"image_repeat":true},{"dur": 20000,"image":"reencor/grid","image_offset":[-1055,0,0],"image_size":[500,2000],"image_angle":[0,90,0],"image_repeat":true}]}]}
+    }
 }
