@@ -58,4 +58,6 @@ Unzip the file and place the folder in the `Assets/images` folder before running
 ```bash
 git clone https://github.com/Ranguel/Reencor
 cd Reencor
+pip install -r requirements.txt
 python main.py
+```
