@@ -1,7 +1,17 @@
 import os
 import string
 import json
-from pygame import init, quit, event, mixer, time, display, font, joystick
+from pygame import (
+    init,
+    quit,
+    event,
+    mixer,
+    time,
+    display,
+    font,
+    joystick,
+    JOYDEVICEADDED,
+)
 from pygame.locals import *
 
 from Util.Game_Screens import *
@@ -10,13 +20,23 @@ from Util.Common_functions import (
     get_object_per_class,
     get_object_per_team,
 )
-from Util.OpenGL_Renderer import set_mode_opengl, load_image_path, font_texture, Camera, Screen
+from Util.OpenGL_Renderer import (
+    set_mode_opengl,
+    load_image_path,
+    font_texture,
+    Camera,
+    Screen,
+)
 from Util.Input_device import InputDevice, dummy_input
+from Util.Interface_objects import Message
+
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
+
 def clamp(value, min_val, max_val):
     return max(min_val, min(value, max_val))
+
 
 def get_dictionaries(current_dir):
     object_dict, image_dict, sound_dict = {}, {}, {}
@@ -63,8 +83,26 @@ def get_dictionaries(current_dir):
                 load_from_path(key, ext, full_path)
 
     font_type = font.Font(current_dir + "/Util/unispace bd.ttf", 60)
-    for i in list(string.ascii_letters + string.digits) + ["+", "-", " ", ":", "_", "/", "!", "?", ".", ",", ";", "(", ")", "[", "]", "{", "}"]:
-        image_dict["font " + i] = font_texture(font_type, i, (126, 126, 126))
+    for i in list(string.ascii_letters + string.digits) + [
+        "+",
+        "-",
+        " ",
+        ":",
+        "_",
+        "/",
+        "!",
+        "?",
+        ".",
+        ",",
+        ";",
+        "(",
+        ")",
+        "[",
+        "]",
+        "{",
+        "}",
+    ]:
+        image_dict["font " + i] = font_texture(font_type, i, (200, 200, 200))
 
     return image_dict, sound_dict, object_dict
 
@@ -107,6 +145,7 @@ class GameObject:
         self.show_inputs = False
 
         self.active = True
+        self.player_number = 2
         self.selected_characters = "ryu SF3", "ryu SF3"
         self.selected_stage = "trining stage"
 
@@ -119,8 +158,12 @@ class GameObject:
         self.current_screen = None
         self.screen_parameters = []
 
-        self.screen_sequence, self.selected_characters, self.selected_stage = [ComboTrialScreen], ["SF3/Ryu", "SF3/Ken"], ["Reencor/Training"]
-        
+        self.screen_sequence, self.selected_characters, self.selected_stage = (
+            [ComboTrialScreen],
+            ["SF3/Ryu", "SF3/Ken"],
+            ["Reencor/Training"],
+        )
+
         self.record_input = False
         self.reproduce_input = False
 
@@ -130,12 +173,10 @@ class GameObject:
     def Input_device_available(self):
         keyboard_conut = 1
         joystick_count = joystick.get_count()
-        self.input_device_list = [InputDevice(self, 1, 1, "keyboard"), InputDevice(self, 2, 2, "none")]
-        try:
-            self.input_device_list[1] = InputDevice(self, 2, 0, "joystick")
-        except:
-            pass
-
+        for i in range(keyboard_conut):
+            self.input_device_list = [InputDevice(self, 1, 1, "keyboard")]
+        for i in range(joystick_count):
+            self.input_device_list.append(InputDevice(self, 2, i, "joystick"))
 
     def next_screen(self, screen_sequence: list = [TitleScreen]):
         self.active = False
@@ -144,7 +185,9 @@ class GameObject:
     def screen_manager(self):
         while len(self.screen_sequence):
             self.active = True
-            self.current_screen = self.screen_sequence[-1](*[self]+self.screen_parameters)
+            self.current_screen = self.screen_sequence[-1](
+                *[self] + self.screen_parameters
+            )
             self.screen_parameters = []
             while self.active:
                 for dev in self.input_device_list + [self.dummy_input_device]:
@@ -190,6 +233,27 @@ class GameObject:
                 if individual_event.key == K_9:
                     self.active = False
                     self.screen_manager()
+            if individual_event.type == JOYDEVICEADDED:
+                i = individual_event.device_index
+                self.input_device_list.append(InputDevice(self, 2, i, "joystick"))
+                self.active_players[1].inputdevice = self.input_device_list[-1]
+                self.input_device_list[-1].active_object = self.active_players[1]
+                self.object_list.append(
+                    Message(
+                        game=self,
+                        string="Joystick connected",
+                        texture_string=[
+                            {"image": "reencor/+", "size": (70, 70)},
+                            {"image": "reencor/5", "size": (70, 70)},
+                        ],
+                        pos=[self.resolution[0] * 0.9, self.resolution[1] * 0.8, -1],
+                        background=(0, 0, 0, 126),
+                        time=60,
+                        kill_on_time=True,
+                        allign="left",
+                        scale=[0.5, 0.5],
+                    )
+                )
 
     def calculate_camera_focus_point(self):
         xpos_list = [active_object.pos[0] for active_object in self.active_players]
@@ -218,7 +282,11 @@ class GameObject:
             path_frame = self.camera_path["path"][self.frame[1]]
             obj = self.camera_path["object"]
             scale = abs(400 / path_frame["pos"][2])
-            zoom = abs(self.camera_focus_point[2] / 400) if hasattr(self, "camera_focus_point") else scale
+            zoom = (
+                abs(self.camera_focus_point[2] / 400)
+                if hasattr(self, "camera_focus_point")
+                else scale
+            )
             cx = path_frame["pos"][0] * obj.face + obj.pos[0]
             cy = path_frame["pos"][1] + obj.pos[1]
             cz = round(scale)
@@ -248,9 +316,10 @@ class GameObject:
         for object in self.object_list:
             object.update(self.camera_focus_point)
         self.hitstop = self.hitstop - 1 if self.hitstop else 0
-        calculate_boxes_collitions(self)
+
         for object in self.object_list:
             update_display_shake(object)
+        calculate_boxes_collitions(self)
         update_display_shake(self.camera)
         self.calculate_camera_focus_point()
 

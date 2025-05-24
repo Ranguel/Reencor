@@ -148,9 +148,8 @@ def draw_line(
     glEnable(GL_TEXTURE_2D)
     glEnable(GL_LIGHTING)
 
-
 def draw_rect(
-    rect, color=(255, 255, 255, 255), thickness=1, fill=False, z_offset=0, glow=1
+    rect, color=(255, 255, 255, 255), thickness=0, z_offset=0, glow=1
 ):
     x, y, width, height = rect
     glPushMatrix()
@@ -167,7 +166,7 @@ def draw_rect(
         1.0,
     ]
     glMaterialfv(GL_FRONT, GL_EMISSION, glow_color)
-    if fill:
+    if not thickness:
         glBegin(GL_QUADS)
     else:
         glLineWidth(thickness)
@@ -179,7 +178,7 @@ def draw_rect(
     glVertex3f(x, y, 0)
 
     glEnd()
-    if not fill:
+    if thickness:
         glLineWidth(1)
     glPopMatrix()
     glEnable(GL_DEPTH_TEST)
@@ -197,100 +196,6 @@ def draw_teapod(pos=(0, 0, 0), scale=(0, 0, 0), color=(0, 0, 0, 0)):
     glutSolidTeapot(1)
     glPopMatrix()
     glEnable(GL_TEXTURE_2D)
-
-
-def string_size(image_dict, string=str, scale=(1, 1)):
-    offset_turn = 0
-    for i in string:
-        offset_turn += image_dict["font " + i][1][0] * scale[0]
-    return offset_turn, image_dict["font " + i][1][1] * scale[1]
-
-
-def draw_string(
-    image_dict,
-    screen,
-    string=str,
-    pos=(0, 0, 0),
-    scale=(1, 1),
-    color=(255, 255, 255, 255),
-    alignment="right",
-    top: bool = True,
-):
-    offset_turn = 0
-    for i in string:
-        screen.draw_texture(
-            image_dict["font " + i][0],
-            (
-                pos[0]
-                + offset_turn * scale[0]
-                - (
-                    0
-                    if alignment == "right"
-                    else sum([image_dict["font " + n][1][0] for n in string]) * scale[0]
-                ),
-                pos[1],
-                pos[2],
-            ),
-            (
-                image_dict["font " + i][1][0] * scale[0],
-                image_dict["font " + i][1][1] * scale[1],
-            ),
-            (False, False),
-            color,
-            [0, 0, 0],
-            False,
-            1,
-            top,
-        )
-        offset_turn += image_dict["font " + i][1][0]
-
-
-def draw_texture_as_string(
-    image_dict,
-    screen,
-    texture_list: list,
-    pos=(0, 0, 0),
-    scale=(1, 1),
-    color=(255, 255, 255, 255),
-    alignment="right",
-    top: bool = True,
-):
-    offset_turn = 0
-    texture_list = [
-        texture for texture in texture_list if texture.get("image", "") in image_dict
-    ]
-    total_width = (
-        sum(
-            (
-                texture["size"][0]
-                if texture.get("size", False)
-                else image_dict[texture["image"]][1][0]
-            )
-            for texture in texture_list
-        )
-        * scale[0]
-    )
-
-    for texture in texture_list:
-        char_width, char_height = texture["size"] if texture.get("size", False) else image_dict[texture["image"]][1]
-        draw_x = pos[0] + offset_turn * scale[0]
-        if alignment != "right":
-            draw_x -= total_width
-
-        screen.draw_texture(
-            image_dict[texture["image"]][0],
-            (draw_x, pos[1], pos[2]),
-            (
-                (char_width * scale[0], char_height * scale[1])
-            ),
-            (False, False),
-            color,
-            [0, 0, 0],
-            False,
-            1,
-            top,
-        )
-        offset_turn += char_width
 
 
 def palette_swap(image, palette):
@@ -370,12 +275,11 @@ class Screen:
         rect: list = (1, 1, 1, 1),
         color: list = (255, 255, 255, 255),
         border_thickness: int = 1,
-        fill: bool = False,
         z_offset: int = 0,
         glow: float = 1,
     ):
         self.draw_list.append(
-            (draw_rect, rect, color, border_thickness, fill, z_offset, glow)
+            (draw_rect, rect, color, border_thickness, z_offset, glow)
         )
 
     def draw_cross(
@@ -402,3 +306,125 @@ class Screen:
         for draw_calls in self.draw_list:
             draw_calls[0](*draw_calls[1:])
         self.draw_list.clear()
+
+
+def get_string_size(image_dict: dict, string: str = "", scale: tuple = (1, 1)):
+    total_width = 0
+    max_height = 0
+    for i in string:
+        total_width += image_dict["font " + i][1][0] * scale[0]
+        max_height = (
+            image_dict["font " + i][1][1] * scale[1]
+            if image_dict["font " + i][1][1] * scale[1] > max_height
+            else max_height
+        )
+    return total_width, max_height
+
+
+def get_texture_string_size(
+    image_dict: dict,
+    texture_list: list = [],
+    scale: tuple = (1, 1),
+):
+    texture_list = [
+        texture for texture in texture_list if texture.get("image", "") in image_dict
+    ]
+    total_width = 0
+    max_height = 0
+    for texture in texture_list:
+        char_width, char_height = (
+            texture["size"] if texture.get("size") else image_dict[texture["image"]][1]
+        )
+        total_width += char_width * scale[0]
+        max_height = max(max_height, char_height * scale[1])
+
+    return (total_width, max_height)
+
+
+def draw_string(
+    image_dict: dict,
+    screen: object = Screen,
+    string: str = "",
+    pos: list = [0, 0, 0],
+    scale: tuple = (1, 1),
+    color: tuple = (255, 255, 255, 255),
+    alignment: str = "right",
+    top: bool = True,
+):
+    offset_turn = 0
+    for i in string:
+        screen.draw_texture(
+            image_dict["font " + i][0],
+            (
+                pos[0]
+                + offset_turn * scale[0]
+                - (
+                    0
+                    if alignment == "right"
+                    else sum([image_dict["font " + n][1][0] for n in string]) * scale[0]
+                ),
+                pos[1],
+                pos[2],
+            ),
+            (
+                image_dict["font " + i][1][0] * scale[0],
+                image_dict["font " + i][1][1] * scale[1],
+            ),
+            (False, False),
+            color,
+            [0, 0, 0],
+            False,
+            1,
+            top,
+        )
+        offset_turn += image_dict["font " + i][1][0]
+
+
+def draw_texture_as_string(
+    image_dict: dict,
+    screen: object = Screen,
+    texture_list: list = [],
+    pos: list = [0, 0, 0],
+    scale: tuple = (1, 1),
+    color: tuple = (255, 255, 255, 255),
+    alignment: str = "right",
+    top: bool = True,
+):
+    offset_turn = 0
+    texture_list = [
+        texture for texture in texture_list if texture.get("image", "") in image_dict
+    ]
+    total_width = (
+        sum(
+            (
+                texture["size"][0]
+                if texture.get("size", False)
+                else image_dict[texture["image"]][1][0]
+            )
+            for texture in texture_list
+        )
+        * scale[0]
+    )
+
+    for texture in texture_list:
+        char_width, char_height = (
+            texture["size"]
+            if texture.get("size", False)
+            else image_dict[texture["image"]][1]
+        )
+        draw_x = pos[0] + offset_turn * scale[0]
+        if alignment != "right":
+            draw_x -= total_width
+
+        screen.draw_texture(
+            image_dict[texture["image"]][0],
+            (draw_x, pos[1], pos[2]),
+            ((char_width * scale[0], char_height * scale[1])),
+            (False, False),
+            color,
+            [0, 0, 0],
+            False,
+            1,
+            top,
+        )
+        offset_turn += char_width

@@ -1,7 +1,13 @@
 import os
 import json
 from pygame import mouse
-from Util.OpenGL_Renderer import string_size, draw_string, draw_texture_as_string
+from Util.OpenGL_Renderer import (
+    get_string_size,
+    get_texture_string_size,
+    draw_string,
+    draw_texture_as_string,
+    Screen
+)
 from Util.Common_functions import (
     colors,
     gradient_color,
@@ -125,7 +131,7 @@ class Menu_Item:
         if self.timer:
             self.timer -= 1
 
-    def draw(self, screen, pos, *args):
+    def draw(self, screen: Screen, pos: tuple=(0,0,0), *args):
         for texture in [{"image": self.image}] + self.draw_textures:
             screen.draw_texture(
                 self.game.image_dict[texture["image"]][0],
@@ -219,7 +225,7 @@ class Menu_Item_String:
             game,
             name,
             pos,
-            string_size(game.image_dict, name, scale),
+            get_string_size(game.image_dict, name, scale),
             scale,
             func,
             param,
@@ -250,7 +256,7 @@ class Menu_Item_String:
         if self.timer:
             self.timer -= 1
 
-    def draw(self, screen, pos, *args):
+    def draw(self, screen: Screen, pos: tuple=(0,0,0), *args):
 
         draw_string(
             self.game.image_dict,
@@ -379,7 +385,7 @@ class Menu_Selector:
                     if best_option != None:
                         self.change_index(best_option)
 
-    def draw(self, screen, pos, *args):
+    def draw(self, screen: Screen, pos: tuple=(0,0,0), *args):
         screen.draw_rect(
             (
                 pos[0]
@@ -457,7 +463,7 @@ class Menu_Deck:
         for selector in self.selectors:
             selector.update(self.surface, self.items)
 
-    def draw(self, screen, pos, *args):
+    def draw(self, screen: Screen, pos: tuple=(0,0,0), *args):
         for item in self.items:
             item.draw(screen, pos)
 
@@ -530,7 +536,7 @@ class Menu_Cursor:
 
         self.box_edit, self.box_list, self.box_addition = False, [], False
 
-    def Box_specific(self, screen, boxes, type="hurtbox", *args):
+    def Box_specific(self, screen: Screen, boxes = any, type="hurtbox", *args):
         if self.edge_edit[0] == False:
             coll_any = 0
             for index, box in enumerate(boxes):
@@ -847,7 +853,7 @@ class Menu_Cursor:
                     abs(max(point_list_y) - min(point_list_y)),
                 ]
 
-    def draw(self, screen):
+    def draw(self, screen: Screen):
 
         if self.box_edit:
             self.Box_specific(screen, self.box_list, self.selected_box_type)
@@ -916,7 +922,7 @@ class Combo_Counter:
         self.timer = self.timer - 1 if self.timer else 0
         self.gradient_timer = self.gradient_timer - 1 if self.gradient_timer else 6
 
-    def draw(self, screen, pos, *args):
+    def draw(self, screen: Screen, pos: tuple=(0,0,0), *args):
         if self.timer:
             draw_string(
                 self.game.image_dict,
@@ -1007,7 +1013,7 @@ class Gauge_Bar:
         else:
             self.timer = self.dict["bar"].get("blink", 0)
 
-    def draw(self, screen, pos, *args):
+    def draw(self, screen: Screen, pos: tuple=(0,0,0), *args):
         color_grad = (
             gradient_color(
                 self.timer,
@@ -1175,41 +1181,52 @@ class Message:
         game: object,
         pos: list = [0, 0, 0],
         scale: tuple = (1, 1),
-        string: str = "none",
-        key_list: list = [],
+        string: str = "",
+        texture_string: list = [],
+        background: tuple = (0, 0, 0, 0),
         time: int = 60,
         color: tuple = (255, 255, 255, 255),
         gradient_timer: int = 0,
         kill_on_time: bool = False,
         top: bool = True,
         shake: list = [0, 0, 0],
+        allign: str = "right",
     ):
         (
             self.game,
             self.pos,
-            self.size,
             self.scale,
             self.string,
-            self.key_list,
+            self.texture_string,
+            self.background,
             self.timer,
             self.color,
             self.gradient_timer,
             self.kill_on_time,
             self.top,
             self.draw_shake,
+            self.allign,
         ) = (
             game,
             pos,
-            string_size(game.image_dict, string, scale),
             scale,
             string,
-            key_list,
+            texture_string,
+            background,
             time,
             color,
             gradient_timer,
             kill_on_time,
             top,
             [0, 0, 0, 0, 0, 0],
+            allign,
+        )
+        self.string_size = get_string_size(game.image_dict, string, scale)
+        self.texture_string_size = get_texture_string_size(
+            game.image_dict, texture_string, scale
+        )
+        self.size = self.string_size[0] + self.texture_string_size[0], max(
+            self.string_size[1], self.texture_string_size[1]
         )
         object_display_shake(self, shake + ["self"])
 
@@ -1219,35 +1236,46 @@ class Message:
         if self.kill_on_time and self.timer == 0:
             object_kill(self)
 
-    def draw(self, screen, pos, *args):
-        if self.timer:
-            if self.key_list:
-                draw_texture_as_string(
-                    self.game.image_dict,
-                    screen,
-                    self.key_list,
-                    (
-                        self.draw_shake[0] + pos[0] + self.pos[0],
-                        self.draw_shake[1] + pos[1] + self.pos[1],
-                        self.pos[2],
-                    ),
-                    self.scale,
-                    gradient_color(self.gradient_timer, 6, (0, 0, 0, 0), self.color),
-                    "right",
-                    self.top,
-                )
-            else:
-                draw_string(
-                    self.game.image_dict,
-                    screen,
-                    str(self.string),
-                    (
-                        self.draw_shake[0] + pos[0] + self.pos[0],
-                        self.draw_shake[1] + pos[1] + self.pos[1],
-                        self.pos[2],
-                    ),
-                    self.scale,
-                    gradient_color(self.gradient_timer, 6, (0, 0, 0, 0), self.color),
-                    "right",
-                    self.top,
-                )
+    def draw(self, screen: Screen, pos: tuple=(0,0,0), *args):
+        if self.background != (0, 0, 0, 0):
+            screen.draw_rect(
+                rect=(
+                    self.draw_shake[0] + pos[0] + self.pos[0] - (self.size[0] if self.allign == "left" else 0),
+                    self.draw_shake[1] + pos[1] + self.pos[1],
+                    self.size[0],
+                    self.size[1],
+                ),
+                color=self.background,
+                border_thickness=0,
+                z_offset=self.pos[2]
+            )
+
+        draw_string(
+            self.game.image_dict,
+            screen,
+            str(self.string),
+            (
+                self.draw_shake[0] + pos[0] + self.pos[0] - (self.texture_string_size[0] if self.allign == "left" else 0),
+                self.draw_shake[1] + pos[1] + self.pos[1],
+                self.pos[2],
+            ),
+            self.scale,
+            self.color,#gradient_color(self.gradient_timer, 6, (0, 0, 0, 0), self.color)
+            self.allign,
+            self.top,
+        )
+
+        draw_texture_as_string(
+            self.game.image_dict,
+            screen,
+            self.texture_string,
+            (
+                self.draw_shake[0] + pos[0] + self.pos[0] + (self.string_size[0] if self.allign == "right" else 0),
+                self.draw_shake[1] + pos[1] + self.pos[1],
+                self.pos[2],
+            ),
+            self.scale,
+            self.color,#gradient_color(self.gradient_timer, 6, (0, 0, 0, 0), self.color)
+            self.allign,
+            self.top,
+        )

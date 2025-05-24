@@ -1,5 +1,5 @@
 from Util.Active_Objects import BaseActiveObject, reset_CharacterActiveObject
-from Util.OpenGL_Renderer import string_size, draw_string
+from Util.OpenGL_Renderer import draw_string
 from Util.Common_functions import (
     function_dict,
     get_state,
@@ -21,53 +21,59 @@ from Util.Box_Collitions import box_collide, calculate_boxes_collitions, draw_bo
 
 
 def load_objects(game, self, *args):
-        game.active_stages = self.selected_stage_objects = [
-            BaseActiveObject(
-                game=game,
-                dict=game.object_dict[game.selected_stage[0]],
-                inicial_state="Stand",
-            )
-        ]
-        game.active_players = self.selected_character_objects = [
-            BaseActiveObject(
-                game=game,
-                dict=game.object_dict[game.selected_characters[0]],
-                pos=(-300, -1),
-                face=1,
-                inputdevice=game.input_device_list[0],
-                team=1,
-            ),
-            BaseActiveObject(
-                game=game,
-                dict=game.object_dict[game.selected_characters[1]],
-                pos=(300, -1),
-                face=-1,
-                inputdevice=game.input_device_list[1],
-                team=2,
-            ),
-        ]
-        self.combo_counters = [
-            Combo_Counter(game=game, parent=active_object)
-            for active_object in self.selected_character_objects
-        ]
-        self.life_bars = [
-            Gauge_Bar(
-                game=game,
-                dict=game.object_dict["Reencor/LifeBar"],
-                parent=active_object,
-            )
-            for active_object in self.selected_character_objects
-        ]
-        self.super_bars = [
-            Gauge_Bar(
-                game=game,
-                dict=game.object_dict["Reencor/SuperBar"],
-                parent=active_object,
-            )
-            for active_object in self.selected_character_objects
-        ]
+    game.active_stages = self.selected_stage_objects = [
+        BaseActiveObject(
+            game=game,
+            dict=game.object_dict[game.selected_stage[0]],
+            inicial_state="Stand",
+        )
+    ]
+    game.active_players = self.selected_character_objects = [
+        BaseActiveObject(
+            game=game,
+            dict=game.object_dict[game.selected_characters[0]],
+            pos=(-300, -1),
+            face=1,
+            inputdevice=game.input_device_list[0],
+            team=1,
+        ),
+        BaseActiveObject(
+            game=game,
+            dict=game.object_dict[game.selected_characters[1]],
+            pos=(300, -1),
+            face=-1,
+            inputdevice=game.input_device_list[1] if len(game.input_device_list) > 1 else game.dummy_input_device,
+            team=2,
+        ),
+    ]
+    self.combo_counters = [
+        Combo_Counter(game=game, parent=active_object)
+        for active_object in self.selected_character_objects
+    ]
+    self.life_bars = [
+        Gauge_Bar(
+            game=game,
+            dict=game.object_dict["Reencor/LifeBar"],
+            parent=active_object,
+        )
+        for active_object in self.selected_character_objects
+    ]
+    self.super_bars = [
+        Gauge_Bar(
+            game=game,
+            dict=game.object_dict["Reencor/SuperBar"],
+            parent=active_object,
+        )
+        for active_object in self.selected_character_objects
+    ]
 
-        game.object_list = self.selected_stage_objects + self.selected_character_objects + self.combo_counters + self.life_bars + self.super_bars
+    game.object_list = (
+        self.selected_stage_objects
+        + self.selected_character_objects
+        + self.combo_counters
+        + self.life_bars
+        + self.super_bars
+    )
 
 
 class TitleScreen:
@@ -92,19 +98,17 @@ class ModeSelectionScreen:
         }
         self.mode_menu = [
             Menu_Item_String(
-                game=game, 
-                name=mode, 
-                string=mode,
-                pos=(-550, 250 - index * 100, 0)
-                )
+                game=game, name=mode, string=mode, pos=(-550, 250 - index * 100, 0)
+            )
             for index, mode in enumerate(self.modes)
         ]
         self.menu_selectors = [
             Menu_Selector(
-                game=game, 
-                inputdevice=game.input_device_list[0], 
-                menu=self.mode_menu, 
-                index=0)
+                game=game,
+                inputdevice=game.input_device_list[0],
+                menu=self.mode_menu,
+                index=0,
+            )
         ]
         self.selection_timer = 60
 
@@ -142,11 +146,13 @@ class SinglePlayerCharacterSelectionScreen:
                 name=self.character_found[index],
                 image=game.object_dict[self.character_found[index]]["portrait"],
                 pos=(
-                    -360 + (index - int(index / 4) * 4) * 145 + (int(int(index / 6) % 2 == 0) * 20),
+                    -360
+                    + (index - int(index / 4) * 4) * 145
+                    + (int(int(index / 6) % 2 == 0) * 20),
                     200 - int(index / 4) * 115,
                     0,
                 ),
-                size=(140, 110)
+                size=(140, 110),
             )
             for index in range(len(self.character_found))
         ]
@@ -154,9 +160,9 @@ class SinglePlayerCharacterSelectionScreen:
             Menu_Selector(
                 game=game,
                 team=ind + 1,
-                inputdevice=game.input_device_list[ind], 
-                menu=self.menu_character, 
-                index=ind
+                inputdevice=game.input_device_list[ind],
+                menu=self.menu_character,
+                index=ind,
             )
             for ind in range(len(game.input_device_list))
         ]
@@ -190,19 +196,21 @@ class SinglePlayerCharacterSelectionScreen:
             selector.draw(self.game.screen, self.game.camera.pos)
             if selector.index_int:
                 reset_CharacterActiveObject(
-                    self=self.dummy_list[selector.team -1],
+                    self=self.dummy_list[selector.team - 1],
                     game=self.game,
-                    dict=self.game.object_dict[selector.menu[selector.selected_index].name],
+                    dict=self.game.object_dict[
+                        selector.menu[selector.selected_index].name
+                    ],
                     face=1 if selector.team == 1 else -1,
-                    team=self.dummy_list[selector.team -1].team,
+                    team=self.dummy_list[selector.team - 1].team,
                     inputdevice=self.game.dummy_input_device,
                 )
 
             if selector.selected and selector.select_int == 1:
-                self.dummy_list[selector.team -1].current_command.append("victorious")
+                self.dummy_list[selector.team - 1].current_command.append("victorious")
             if selector.select_int == -1:
-                get_state(self.dummy_list[selector.team -1], {"Stand": 2}, True)
-                
+                get_state(self.dummy_list[selector.team - 1], {"Stand": 2}, True)
+
         for dummy in self.dummy_list:
             dummy.update(self.game.camera_focus_point)
             dummy.fet = "grounded"
@@ -363,7 +371,7 @@ class VersusScreen:
             self.slow_proportion = 0
         if self.slow_timer == 1:
             self.game.active = False
-        
+
         if not self.finish_round:
             for active_object in self.selected_character_objects:
                 if active_object.gauges["health"] <= 0:
@@ -382,9 +390,13 @@ class VersusScreen:
                     ]
                     for active_object in self.selected_character_objects:
                         active_object.inputdevice = self.game.dummy_input_device
-                    self.slow_proportion, self.slow_timer, self.finish_round = 1, 240, True
+                    self.slow_proportion, self.slow_timer, self.finish_round = (
+                        1,
+                        240,
+                        True,
+                    )
                     break
-                    
+
     def __dein__(self):
         self.game.screen_sequence += [VersusScreen]
 
@@ -396,7 +408,7 @@ class TrainingScreen:
         self.selected_stage_objects = []
         self.selected_character_objects = []
         self.game.show_inputs = True
-        
+
         load_objects(game, self)
 
         self.selected_character_objects[0].gauges["super"] = 1100
@@ -420,7 +432,7 @@ class TrainingScreen:
         for active_object in self.selected_character_objects:
             if active_object.gauges["health"] <= 0:
                 active_object.gauges["health"] = 1100
-                
+
         self.game.gameplay()
         self.game.display()
 
@@ -429,23 +441,23 @@ class TrainingScreen:
 
 
 class ComboTrialScreen:
-    def __init__(self, game: object=object, trial_level: int = 0, *args):
+    def __init__(self, game: object = object, trial_level: int = 0, *args):
         self.game = game
         game.camera.pos = [0, 320, 400]
         self.selected_stage_objects = []
         self.selected_character_objects = []
         self.game.show_inputs = True
-        
+
         load_objects(game, self)
 
         game.input_device_list[0].team = 2
 
-        
-
         self.trial_level = trial_level
-        self.trial_move_list = self.selected_character_objects[0].dict["combo_trails"][trial_level]
-        self.trial_move_index = 0   
-        self.other_last_hitstun = 0 
+        self.trial_move_list = self.selected_character_objects[0].dict["combo_trails"][
+            trial_level
+        ]
+        self.trial_move_index = 0
+        self.other_last_hitstun = 0
         self.trial_message_list = []
         self.finish_timer = 120
         self.finish_round = False
@@ -453,73 +465,118 @@ class ComboTrialScreen:
         self.selected_character_objects[0].gauges["super"] = 1100
         self.selected_character_objects[1].gauges["super"] = 1100
         if self.trial_move_list.get("start_pos", False):
-            self.selected_character_objects[0].pos = self.trial_move_list["start_pos"][0] + [0]
-            self.selected_character_objects[1].pos = self.trial_move_list["start_pos"][1] + [0]
-            self.game.pos[0] = (self.trial_move_list["start_pos"][0][0] + self.trial_move_list["start_pos"][1][0])/2
+            self.selected_character_objects[0].pos = self.trial_move_list["start_pos"][
+                0
+            ] + [0]
+            self.selected_character_objects[1].pos = self.trial_move_list["start_pos"][
+                1
+            ] + [0]
+            self.game.pos[0] = (
+                self.trial_move_list["start_pos"][0][0]
+                + self.trial_move_list["start_pos"][1][0]
+            ) / 2
 
         self.guard_timer = 0
 
         for ind, move in enumerate(self.trial_move_list["sequence"]):
             self.trial_message_list.append(
-                        Message(
-                            game=game,
-                            pos=(-600, 160 - 50 * ind, 1),
-                            key_list=[{"image": "font "+letter} for letter in move["name"]] + [{"image": "reencor/"+input, "size": (80, 80)} for input in move["input"].split(",")],
-                            time=20000,
-                            gradient_timer=20000,
-                            scale=(0.5, 0.5),
+                Message(
+                    game=game,
+                    pos=[-600, 160 - 40 * ind, 0],
+                    string=move.get("comment", ""),
+                    texture_string=[
+                        {"image": "reencor/" + input, "size": (70, 70)}
+                        for input in move["input"].split(",")
+                    ],
+                    background=(0,0,0,140),
+                    time=20000,
+                    gradient_timer=20000,
+                    scale=(0.5, 0.5),
+                )
+            )
 
-                        )
-                    )
-            
         self.game.object_list += self.trial_message_list
-            
+
     def __loop__(self):
         self.other_last_hitstun = self.selected_character_objects[1].hitstun
         if self.finish_round:
             for active_object in self.selected_character_objects:
                 active_object.current_command.append("victorious")
-        
+
         else:
             move_match = False
             if self.trial_move_list["sequence"][self.trial_move_index].get("hit", True):
                 if len(self.selected_character_objects[0].combo_list):
-                    if self.selected_character_objects[0].combo_list[-1] == self.trial_move_list["sequence"][self.trial_move_index]["move"]:
+                    if (
+                        self.selected_character_objects[0].combo_list[-1]
+                        == self.trial_move_list["sequence"][self.trial_move_index][
+                            "move"
+                        ]
+                    ):
                         self.selected_character_objects[0].combo_list = []
                         move_match = True
             else:
-                if self.selected_character_objects[0].current_state == self.trial_move_list["sequence"][self.trial_move_index]["move"]:
+                if (
+                    self.selected_character_objects[0].current_state
+                    == self.trial_move_list["sequence"][self.trial_move_index]["move"]
+                ):
                     move_match = True
 
             if move_match:
                 self.trial_message_list[self.trial_move_index].color = (0, 0, 0, 255)
-                object_display_shake(self.trial_message_list[self.trial_move_index], [60,0,20,"self"])
+                self.trial_message_list[self.trial_move_index].pos[2] = -20
+                object_display_shake(
+                    self.trial_message_list[self.trial_move_index], [60, 0, 20, "self"]
+                )
                 self.trial_move_index += 1
-                print(self.selected_character_objects[0].current_state)
                 if self.trial_move_index == len(self.trial_move_list["sequence"]):
                     self.trial_level += 1
                     self.trial_move_index = 0
                     self.finish_round = True
                     self.game.object_list.append(
-                                Message(
-                                    game=self.game,
-                                    pos=(-150 if self.trial_level < len(self.selected_character_objects[0].dict["combo_trails"]) else -400, 0, -1),
-                                    string="COMPLETE" if self.trial_level < len(self.selected_character_objects[0].dict["combo_trails"]) else "ALL TRIALS COMPLETE",
-                                    time=20000,
-                                    top=False,
-                                    shake=[20, 20, 10]
+                        Message(
+                            game=self.game,
+                            pos=[
+                                (
+                                    -180
+                                    if self.trial_level
+                                    < len(
+                                        self.selected_character_objects[0].dict[
+                                            "combo_trails"
+                                        ]
+                                    )
+                                    else -430
+                                ),
+                                0,
+                                -1,
+                            ],
+                            string=(
+                                " COMPLETE "
+                                if self.trial_level
+                                < len(
+                                    self.selected_character_objects[0].dict[
+                                        "combo_trails"
+                                    ]
                                 )
-                            )
-                    
-        self.guard_timer -= 1 if self.guard_timer else 0
-        if self.guard_timer == 1:
-            self.selected_character_objects[1].guard = ""
-            self.selected_character_objects[1].gauges["health"] = 1100
+                                else " ALL TRIALS COMPLETE "
+                            ),
+                            background=(0, 0, 0, 126),
+                            time=20000,
+                            top=False,
+                            shake=[20, 20, 10],
+                        )
+                    )
+
+        if self.guard_timer and not self.selected_character_objects[1].hitstun and not self.selected_character_objects[1].hitstop:
+            self.guard_timer -= 1 
+            if not self.guard_timer:
+                self.selected_character_objects[1].guard = ""
+                self.selected_character_objects[1].gauges["health"] = 1100
 
         for active_object in self.selected_character_objects:
             if active_object.gauges["health"] <= 0:
                 active_object.gauges["health"] = 1100
-                
+
         self.game.gameplay()
         self.game.display()
 
@@ -535,19 +592,21 @@ class ComboTrialScreen:
 
             for message in self.trial_message_list:
                 message.color = (255, 255, 255, 255)
-                message.draw_shake = [0,0,0,0,0,0]
+                message.draw_shake = [0, 0, 0, 0, 0, 0]
+                message.pos[2] = 0
 
         if self.finish_round:
             self.finish_timer -= 1
             if self.finish_timer == 0:
                 self.game.active = False
-                    
+
     def __dein__(self):
-        if self.trial_level == len(self.selected_character_objects[0].dict["combo_trails"]):
+        if self.trial_level == len(
+            self.selected_character_objects[0].dict["combo_trails"]
+        ):
             return
         self.game.screen_sequence += [ComboTrialScreen]
         self.game.screen_parameters = [self.trial_level]
-        
 
 
 class EditScreen:
@@ -789,7 +848,7 @@ class DebuggingScreen:
         self.game.show_inputs = True
 
         load_objects(game, self)
-        
+
         self.selected_character_objects[0].gauges["super"] = 1100
         self.selected_character_objects[1].gauges["super"] = 1100
 

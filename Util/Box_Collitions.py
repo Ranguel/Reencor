@@ -329,46 +329,70 @@ def calculate_boxes_collitions(game, *args):
                 0.8 + (self.combo / 2) + 1 if (0 not in other.cancel) else 0,
                 -0.8 - (self.combo / 4) - 1 if (0 not in other.cancel) else 0,
             )
+            
             if (
                 set(other.cancel).intersection(("neutral", "interruption", "blocking"))
-                and ("1" in other.inputdevice.current_input or other.guard == "block")
-                and other.fet == "grounded"
-            ):
-                if set(hitbox["hittype"]).intersection(("low", "middle")):
-                    type, ri, ru = ["block", "crouch"], 0.1, 0.3
-                else:
-                    ri, ru = ri + 0.4, ru - 0.3
-            elif (
-                set(other.cancel).intersection(("neutral", "interruption", "blocking"))
-                and ("4" in other.inputdevice.current_input or other.guard == "block")
+                and (
+                    "4" in other.inputdevice.current_input
+                    or (
+                        other.guard == "block"
+                        and set(hitbox["hittype"]).intersection(("high", "middle"))
+                    )
+                )
                 and other.fet == "grounded"
             ):
                 if set(hitbox["hittype"]).intersection(("high", "middle")):
                     type, ri, ru = ["block", "stand"], 0.1, 0.3
                 else:
                     ri, ru = ri + 0.4, ru - 0.3
-            elif set(other.cancel).intersection(
-                ("neutral", "interruption", "parry", "blocking")
-            ) and ("3" in other.parry or other.guard == "parry"):
-                if set(hitbox["hittype"]).intersection(("low", "middle")) and (
-                    other.parry[1] >= 16 or other.guard == "parry"
-                ):
-                    other.parry[1], type, ri, ru = 0, ["parry", "crouch"], -0.2, 0.6
+            elif (
+                set(other.cancel).intersection(("neutral", "interruption", "blocking"))
+                and (
+                    "1" in other.inputdevice.current_input
+                    or (
+                        other.guard == "block"
+                        and set(hitbox["hittype"]).intersection(("low", "middle"))
+                    )
+                )
+                and other.fet == "grounded"
+            ):
+                if set(hitbox["hittype"]).intersection(("low", "middle")):
+                    type, ri, ru = ["block", "crouch"], 0.1, 0.3
                 else:
-                    ri, ru = ri + 0.5, ru - 0.4
-            elif set(other.cancel).intersection(
+                    ri, ru = ri + 0.4, ru - 0.3
+            if set(other.cancel).intersection(
                 ("neutral", "interruption", "parry", "blocking")
-            ) and ("6" in other.parry or other.guard == "parry"):
+            ) and (
+                "6" in other.parry
+                or (
+                    other.guard == "parry"
+                    and set(hitbox["hittype"]).intersection(("high", "middle"))
+                )
+            ):
                 if set(hitbox["hittype"]).intersection(("high", "middle")) and (
                     other.parry[1] >= 16 or other.guard == "parry"
                 ):
                     other.parry[1], type, ri, ru = 0, ["parry", "stand"], -0.2, 0.6
                 else:
                     ri, ru = ri + 0.5, ru - 0.4
+            elif set(other.cancel).intersection(
+                ("neutral", "interruption", "parry", "blocking")
+            ) and (
+                "3" in other.parry
+                or (
+                    other.guard == "parry"
+                    and set(hitbox["hittype"]).intersection(("low", "middle"))
+                )
+            ):
+                if set(hitbox["hittype"]).intersection(("low", "middle")) and (
+                    other.parry[1] >= 16 or other.guard == "parry"
+                ):
+                    other.parry[1], type, ri, ru = 0, ["parry", "crouch"], -0.2, 0.6
+                else:
+                    ri, ru = ri + 0.5, ru - 0.4
 
             # type, ri, ru = ['parry', 'stand'], .1, .3
-            self.self_main_object.combo, other.current_command, self.current_command = (
-                self.self_main_object.combo * bool(other.hitstun) + 1,
+            other.current_command, self.current_command = (
                 type + hitbox["hittype"],
                 self.current_command
                 + [
@@ -379,16 +403,12 @@ def calculate_boxes_collitions(game, *args):
                     )
                 ],
             )
-            
-            if self.self_main_object.combo == 1:
+            if not other.hitstun:
                 self.self_main_object.damage_scaling = [100, 100]
                 self.self_main_object.combo_list = []
+                self.self_main_object.combo = 0
 
             self.damage_scaling = self.self_main_object.damage_scaling
-            self.self_main_object.combo_list.append(self.dict["name"] + " " + self.current_state)
-
-            for move in self.self_main_object.combo_list:
-                print({"move": move})
 
             game.object_list.append(
                 BaseActiveObject(
@@ -408,6 +428,12 @@ def calculate_boxes_collitions(game, *args):
                 if hitbox.get(value, None) != None:
                     function_dict[value](self, hitbox[value], other)
 
+            if other.hitstun:
+                self.self_main_object.combo += 1
+                self.self_main_object.combo_list.append(
+                    self.dict["name"] + " " + self.current_state
+                )
+
         self.hit_coll_hurt = []
 
     for self in active_objects:
@@ -424,7 +450,7 @@ def draw_boxes(game, object):
 
             for box in object.boxes[boxes_type].get("boxes", []):
                 game.screen.draw_rect(
-                    (
+                    rect=(
                         object.pos[0]
                         + box[0] * object.face
                         - box[2] * (object.face < 0),
@@ -432,9 +458,7 @@ def draw_boxes(game, object):
                         box[2],
                         box[3],
                     ),
-                    colors[boxes_type],
-                    1,
-                    False,
-                    -2,
+                    color=colors[boxes_type],
+                    border_thickness=2,
                 )
             game.screen.draw_cross(object.pos, 80)

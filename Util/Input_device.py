@@ -1,6 +1,6 @@
 from pygame import joystick, key
 from random import uniform, choice
-from Util.Common_functions import RoundSign, object_image
+from Util.Common_functions import RoundSign
 
 
 keyboard_mapping = (
@@ -21,29 +21,29 @@ keyboard_mapping = (
 
 joystick_name_mapping = {
     "Nintendo Switch Pro Controller": (
-        (("a", 0), ("b", 14), ("b", 13, 1)),
-        (("a", 1), ("b", 11, 1), ("b", 12)),
-        (("a", 5),),
-        (("b", 0),),
-        (("b", 1),),
-        (("b", 10),),
-        (("b", 2),),
-        (("b", 3),),
+        (("analog", 0), ("binary", 14), ("binary", 13, 1)),
+        (("analog", 1), ("binary", 11, 1), ("binary", 12)),
+        (("analog", 5),),
+        (("binary", 0),),
+        (("binary", 1),),
+        (("binary", 10),),
+        (("binary", 2),),
+        (("binary", 3),),
         (
-            ("b", 9),
-            ("a", 4),
+            ("binary", 9),
+            ("analog", 4),
         ),
     ),
     "Xbox Controller": (
-        (("a", 0),),
-        (("a", 1),),
-        (("b", 4),),
-        (("b", 3),),
-        (("b", 2),),
-        (("b", 5),),
-        (("b", 1),),
-        (("a", 2),),
-        (("a", 3),),
+        (("analog", 0),),
+        (("analog", 1),),
+        (("binary", 4),),
+        (("binary", 3),),
+        (("binary", 2),),
+        (("binary", 5),),
+        (("binary", 1),),
+        (("analog", 2),),
+        (("analog", 3),),
     ),
 }
 
@@ -83,7 +83,7 @@ class InputDevice:
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             0,
         )
-        self.mode_name = "AI"
+        
         self.input_timer = 0
         self.record_timer = 0
         self.recorded_inputs = []
@@ -99,7 +99,7 @@ class InputDevice:
             {"command": "QCB", "sequence": ("2", "1", "4"), "press": True},
             {"command": "QCB", "sequence": ("2", "4"), "press": True},
             {"command": "DP", "sequence": ("6", "3", "2", "3"), "press": True},
-            {"command": "DP", "sequence": ("3", "2", "3"), "press": True},
+            {"command": "DP", "sequence": ("3", "2", "3"), "press": True},#
             {"command": "DP", "sequence": ("3", "2", "6"), "press": True},
             {"command": "DP", "sequence": ("6", "2", "6"), "press": True},
             {"command": "DP", "sequence": ("6", "2", "3"), "press": True},
@@ -112,12 +112,12 @@ class InputDevice:
     def axis_button(self, input):
         return (
             (RoundSign(round(self.controller.get_axis(input[1]))))
-            if input[0] == "a"
+            if input[0] == "analog"
             else (self.controller.get_button(input[1]) * (-1 if len(input) > 2 else 1))
         )
 
     def keyboard_mode(self):
-        keyboard = tuple(key.get_pressed())  # index
+        keyboard = tuple(key.get_pressed())
         self.raw_input = [
             sum(keyboard[key] for key in self.key[0]),
             sum(keyboard[key] for key in self.key[1]),

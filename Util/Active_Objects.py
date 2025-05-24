@@ -222,8 +222,8 @@ class BaseActiveObject:
         ) or (self.frame[0] <= 0 and self.frame[1] <= 0):
             get_state(self, self.buffer_state)
         self.frame[1] -= 1 * (
-            ((self.hitstop != 0 and self.ignore_stop) or (not self.hitstop))
-            and ((self.hold_on_stun and self.hitstun == 0) or (not self.hold_on_stun))
+            ((self.hitstop and self.ignore_stop) or (not self.hitstop))
+            and ((self.hold_on_stun and not self.hitstun) or (not self.hold_on_stun))
         )
         if self.frame[1] <= 0:
             next_frame(

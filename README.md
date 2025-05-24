@@ -9,7 +9,7 @@ Check out the gameplay demo on Reddit:
 
 ## Version
 
-**Version:** 0.3.2 (Pre-Alpha)
+**Version:** 0.3.2-pre.1
 
 ## Features
 
@@ -37,7 +37,7 @@ You can download the sprites from the following source:
 
 Unzip the file and place the folder in the `Assets/images` folder before running the game.
 
-## 🎮 Basic Controls
+## Basic Controls
 
 | Action              | Input                    |
 |---------------------|--------------------------|
