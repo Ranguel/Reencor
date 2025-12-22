@@ -1,0 +1,10 @@
+{
+  "type": "indicator",
+  "name": "SF3_Style_Health_Bar",
+  "defaults": {"draw": {"image": "reencor/p_b1","position": [0,0],"size": [0.1,0.1],"rotation": 0,"keep_aspect": false,"flip": [false,false],"tint": [1,1,1,1],"glow": 1,"uv_scale": [1,1],"uv_offset": [0,0],"uv_size": [1,1],"side": "both","program": "ui"}},
+  "states": {
+  "Base": {
+    "framedata": [{"duration": 99999,"draw": [{"file": "02_Ryu/02593","position": [-0.935,0.73],"size": [0.14,0.14],"keep_aspect": true,"side": true,"flip": [true,false],"uv_offset": [0.47,0.59],"uv_size": [0.09,0.09]},{"file": "game/health_bar","position": [-0.95,0.7],"size": [0.9,0.25],"keep_aspect": true,"side": true},{"tint": [0,1,0,1],"meter": "health","position": [-0.92,0.89],"size": [0.82,0.05],"keep_aspect": true,"side": true,"program": "meter"}]}]
+  }
+}
+}
