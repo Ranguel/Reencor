@@ -1,20 +1,16 @@
 {
   "type": "stage",
   "name": "Trining Stage",
-  "portrait": "02_Ryu/03286",
   "light": [-1,1,-3,0],
   "ambient": [0.9,0.7,0.6,1],
   "camera_focus_point_limit": [[-16,16],[10,-2]],
   "music": "",
-  "scale": 1,
-  "gravity": 0,
   "mass": 100000,
   "physics_type": "static",
-  "timekill": false,
   "defaults": {"boxes": {"environmentbox": {"rects": [{"vec": [-40,-10,80,10]},{"vec": [15,-4,5,40]},{"vec": [-20,-4,5,40]}]}}},
   "states": {
-  "Base": {
-    "framedata": [{"dur": 20000,"draw": [{"file": "reencor/grid","offset": [-15,0,-15],"size": [30,30],"rotation": [90,0,0],"uv_scale": [15,15], "shadow_cast": false},{"file": "reencor/grid","offset": [-15,0,-15],"size": [30,30],"rotation": [0,0,0],"uv_scale": [15,15]},{"file": "reencor/grid","offset": [-15,0,15],"size": [30,30],"rotation": [0,90,0],"uv_scale": [15,15]},{"file": "reencor/grid","offset": [15,0,15],"size": [30,30],"rotation": [0,90,0],"uv_scale": [15,15]}]}]
+  "idle": {
+    "framedata": [{"dur": 20000,"draw": [{"file": "reencor/grid","position": [-15,0,-15],"size": [30,30],"rotation": [90,0,0],"uv_scale": [15,15], "shadow_cast": false},{"file": "reencor/grid","position": [-15,0,-15],"size": [30,30],"rotation": [0,0,0],"uv_scale": [15,15]},{"file": "reencor/grid","position": [-15,0,15],"size": [30,30],"rotation": [0,90,0],"uv_scale": [15,15]},{"file": "reencor/grid","position": [15,0,15],"size": [30,30],"rotation": [0,90,0],"uv_scale": [15,15]}]}]
   }
 }
 }

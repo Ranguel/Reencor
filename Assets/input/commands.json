@@ -1,0 +1,8 @@
+{
+    "QC": [["down", "-right"], ["down"], ["right"]], 
+    "DP": [["right"], ["down", "-right"], ["down"]], 
+    "DQC": [["down", "-right"], ["down"], ["right"], ["down", "-right"], ["down"], ["right"]], 
+    "FBC": [["down", "-right"], ["down"], ["right"], ["down", "-left"], ["down"], ["left"]], 
+    "Doble_tap": [["x_neutral>right", "y_neutral"], ["right>x_neutral", "y_neutral"], ["x_neutral>right", "y_neutral"]], 
+    "Down_Up_tap": [["down"], ["y_neutral"], ["up"]]
+}

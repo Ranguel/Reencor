@@ -4,7 +4,7 @@ A retro-inspired 2D fighting game featuring classic-style sprites, Pygame, and O
 
 ## Version
 
-**Version:** 0.4.0-alpha
+**Version:** 0.4.1-alpha
 
 ## Features
 
@@ -47,7 +47,28 @@ Unzip the file and place the folder in the `Assets/images` folder before running
 | Light Punch (LP)    | A                        |
 | Medium Punch (MP)   | S                        |
 | Heavy Punch (HP)    | D                        |
-| Light Kick (LK)     | Q                        |
-| Medium Kick (MK)    | W                        |
+| Light Kick (LK)     | Q (Select)               |
+| Medium Kick (MK)    | W (Cancel)               |
 | Heavy Kick (HK)     | E                        |
-| Special Move (e.g., Hadouken) | ↓ ↘ → + Punch  |
+
+## Gamepad Controls (Default)
+
+| Action              | Input (Gamepad) |
+|---------------------|------------------|
+| Move Left           | D-Pad ←          |
+| Move Right          | D-Pad →          |
+| Crouch              | D-Pad ↓          |
+| Jump                | D-Pad ↑          |
+| Light Punch (LP)    | X                |
+| Medium Punch (MP)   | Y                |
+| Heavy Punch (HP)    | RB               |
+| Light Kick (LK)     | A                |
+| Medium Kick (MK)    | B                |
+| Heavy Kick (HK)     | RT               |
+| Special Move (e.g., Hadouken) | ↓ ↘ → + Punch |
+
+Notes:
+- The default layout follows a common Xbox-style controller mapping.
+- In menu scenes:
+  - A = Confirm / Select
+  - B = Cancel / Back

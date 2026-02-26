@@ -7,8 +7,8 @@ in vec3 in_normal;
 uniform vec2 position;
 uniform vec2 size;
 uniform vec2 uv_scale;
-uniform vec2 uv_offset;     // nueva: desplazamiento UV
-uniform vec2 uv_size;       // nueva: tamaño UV
+uniform vec2 uv_offset;
+uniform vec2 uv_size;
 uniform float screen_aspect_inv;
 uniform float texture_aspect;
 uniform bool side;

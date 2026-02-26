@@ -1,27 +1,45 @@
 import pygame
 from pygame._sdl2 import controller
-from engine.gameplay.common_functions import get_object_per_team
 
+from engine.constant.ui import *
 from engine.input.mapping import keyboard_mapping, controller_mapping, AI_mapping
 from engine.input.input_parser import InputParser
 from engine.input.commnad_detector import CommandDetector
+from engine.gameplay.object_query import get_actor_per_team
+
+inputs_shown = {
+    "A_press",
+    "B_press",
+    "X_press",
+    "Y_press",
+    "R1_press",
+    "R2_press",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+}
 
 
 class BaseInputDevice:
     def __init__(
         self,
-        app: object = None,
-        side: int = 0,
+        side: ScreenSide = ScreenSide.LEFT,
     ):
         self.type = "none"
-        self.app, self.side, self.mapping = app, side, ()
+        self.side, self.mapping = side, ()
 
         self.input_raw = set()
-        self.button_display_list = []
+        self.button_display_list = [set()]
         self.render_list = []
 
-        self.input_interruption = False
-        self.target = None
+        self.interruption = False
+        self.target = []
 
         self.parser = InputParser()
         self.detector = CommandDetector()
@@ -29,60 +47,68 @@ class BaseInputDevice:
     def get_input(self):
         return {"x_neutral", "y_neutral"}
 
-    def update(self, *args):
-        if self.target is None and self.app is not None:
-            self.target = get_object_per_team(self.app.object_list, self.side)
-            self.target.input_device = self
-
+    def update(self, **kwargs):
         raw = self.get_input()
         parsed = self.parser.parse(raw=raw)
-        command = self.detector.update(parsed_input=parsed)
+        command = self.detector.update(
+            parsed_input=parsed, interruption=self.parser.interruption
+        )
 
         if self.parser.interruption:
-
             if len(self.button_display_list) > 20:
                 self.button_display_list.pop(0)
-            self.button_display_list.append(parsed["buttons"])
+            self.button_display_list.append(parsed["pressed"] | set(parsed["numpad"]))
 
-            if self.target is not None:
-                self.target.input_interruption = True
+            self.interruption = True
 
-        if self.target is not None:
-            self.target.input = parsed["buttons"] | set(parsed["direction"])
-            self.target.command = command
+            for object in self.target:
+                object.input_interruption = True
 
-    def render(self, renderer, *args):
-        if not self.input_interruption:
-            renderer.draw_queue.extend(self.render_list)
-            return
+        for object in self.target:
+            object.input.update(parsed["pressed"] | set(parsed["direction"]))
+            object.command.update(command)
+
+    def render(self, **kwargs):
+        if not self.interruption:
+            return self.render_list
 
         self._build_draw_command()
 
-        renderer.draw_queue.extend(self.render_list)
+        return self.render_list
 
     def _build_draw_command(self):
         self.render_list = []
+
         for y, input_set in enumerate(self.button_display_list):
+
+            if input_set.isdisjoint(inputs_shown):
+                continue
+
             x = 0
+
             for input in input_set:
-                key = "reencor/" + input
-                if key not in self.app.image_dict:
+
+                if input not in inputs_shown:
                     continue
-                image = self.app.image_dict[key]
-                aspect = image[1][0] / image[1][1]
+
+                color_texture = "icon/" + input
+                texture_aspect = color_texture
+
                 render_cmd = {
-                    "color_texture": image[0],
+                    "color_texture": color_texture,
                     "position": (-0.95 + x * 0.04, -0.9 + y * 0.06),
                     "size": (0.03, 0.06),
                     "rotation": 0,
                     "keep_aspect": True,
-                    "texture_aspect": aspect,
+                    "texture_aspect": texture_aspect,
                     "flip": [False, False],
                     "tint": (1, 1, 1, 1),
-                    "side": (False if self.target is None else self.target.side),
+                    "side": self.side == ScreenSide.RIGHT,
                     "program": "ui",
                 }
+
                 self.render_list.append(render_cmd)
+
                 x += 1
 
 

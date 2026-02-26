@@ -1,0 +1,11 @@
+{
+  "type": "walls",
+  "name": "Walls",
+  "physics_type": "static",
+  "defaults": {"boxes": {"environmentbox": {"rects": [{"vec": [5.5,-4,5,40]},{"vec": [-10.5,-4,5,40]}]}}},
+  "states": {
+  "idle": {
+    "framedata": [{"dur": 20000}]
+  }
+}
+}

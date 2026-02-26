@@ -1,0 +1,13 @@
+{
+  "type": "selector",
+  "name": "Selector",
+  "defaults": {"draw": {"folder": "icon","size": [0.2,0.2],"keep_aspect": true, "program": "ui"}},
+  "states": {
+  "idle": {
+    "framedata": [{"dur": 2,"draw": [{"name": "1"}]},{"dur": 2,"draw": [{"name": "2"}]},{"dur": 2,"draw": [{"name": "3"}]},{"dur": 2,"draw": [{"name": "6"}]},{"dur": 2,"draw": [{"name": "9"}]},{"dur": 2,"draw": [{"name": "8"}]},{"dur": 2,"draw": [{"name": "7"}]},{"dur": 2,"draw": [{"name": "4"}]},{"frame_repeat": [0,-1]}]
+  },
+  "selected": {
+    "framedata": [{"dur": 20000,"draw": [{"name": "6"}]}]
+  }
+}
+}
