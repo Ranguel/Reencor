@@ -2,6 +2,10 @@
  
 A retro-inspired 2D fighting game featuring classic-style sprites, Pygame, and OpenGL.
 
+## Demo
+
+https://github.com/user-attachments/assets/1bc77764-fea2-4dc3-a70f-b5bfc6aef54b
+
 ## Version
 
 **Version:** 0.4.1-alpha
