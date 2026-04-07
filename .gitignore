@@ -12,7 +12,7 @@ ENV/
 env.bak/
 venv.bak/
 
-# VSCode config (optional to ignore user settings)
+# VSCode config
 .vscode/
 
 # macOS system files
@@ -42,7 +42,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# Python-specific cache
+# Python cache
 *.log
 *.pot
 *.pyc
